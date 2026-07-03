@@ -1,0 +1,42 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: silsilah
+      POSTGRES_USER: silsilah
+      POSTGRES_PASSWORD: silsilah
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - miniodata:/data
+
+  backend:
+    build: ./backend
+    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    environment:
+      POSTGRES_DB: silsilah
+      POSTGRES_USER: silsilah
+      POSTGRES_PASSWORD: silsilah
+      POSTGRES_HOST: db
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+volumes:
+  pgdata:
+  miniodata:
