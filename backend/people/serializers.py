@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from trees.models import TreeMembership
 
-from .models import Person, PersonChangeLog, Relationship
+from .models import MediaItem, Person, PersonChangeLog, Relationship, ShareLink
 
 # Fields hidden from Viewers / anonymous public-link visitors when the person
 # is still living (PRD #20).
@@ -109,3 +109,82 @@ class PersonChangeLogSerializer(serializers.ModelSerializer):
     class Meta:
         model = PersonChangeLog
         fields = ["id", "person", "changed_by", "changed_by_username", "changed_at", "diff"]
+
+
+class MediaItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MediaItem
+        fields = ["id", "person", "image", "caption", "event_date", "created_at"]
+        read_only_fields = ["id", "person", "created_at"]
+
+
+class ShareLinkSerializer(serializers.ModelSerializer):
+    root_person_name = serializers.CharField(
+        source="root_person.name", read_only=True, default=None
+    )
+    scope = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ShareLink
+        fields = [
+            "id",
+            "token",
+            "root_person",
+            "root_person_name",
+            "include_ancestors",
+            "scope",
+            "created_at",
+        ]
+        read_only_fields = ["id", "token", "created_at"]
+
+    def get_scope(self, obj):
+        return "branch" if obj.root_person_id else "whole_tree"
+
+    def validate_root_person(self, value):
+        tree = self.context.get("tree")
+        if value and tree and value.tree_id != tree.id:
+            raise serializers.ValidationError(
+                "root_person must belong to this tree."
+            )
+        return value
+
+
+class PublicPersonSerializer(serializers.ModelSerializer):
+    """Read-only person representation for anonymous share-link visitors.
+
+    Applies the same living-person redaction a Viewer gets — never trust the
+    frontend to hide it.
+    """
+
+    media = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Person
+        fields = [
+            "id",
+            "name",
+            "gender",
+            "birth_date",
+            "death_date",
+            "is_living",
+            "photo",
+            "notes",
+            "media",
+        ]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.is_living:
+            for field in PRIVATE_LIVING_FIELDS:
+                data[field] = None
+            data["media"] = []
+            data["_private_redacted"] = True
+        return data
+
+    def get_media(self, instance):
+        if instance.is_living:
+            return []
+        request = self.context.get("request")
+        return MediaItemSerializer(
+            instance.media.all(), many=True, context={"request": request}
+        ).data

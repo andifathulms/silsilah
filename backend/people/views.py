@@ -3,16 +3,22 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from trees.models import Tree
-from trees.permissions import IsTreeMember
+from trees.permissions import IsTreeMember, IsTreeOwner
 
-from .models import Person, Relationship
+from .models import MediaItem, Person, Relationship, ShareLink
 from .serializers import (
+    MediaItemSerializer,
     PersonChangeLogSerializer,
     PersonSerializer,
+    PublicPersonSerializer,
     RelationshipSerializer,
+    ShareLinkSerializer,
 )
+
+EDITOR_ROLES = ("owner", "editor")
 
 
 class TreeScopedMixin:
@@ -119,3 +125,81 @@ class RelationshipViewSet(TreeScopedMixin, viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(tree=self.get_tree())
+
+
+class MediaItemViewSet(TreeScopedMixin, viewsets.ModelViewSet):
+    """Photos attached to a Person (PRD #22).
+
+    Media of a living person is hidden from Viewers and public visitors, the
+    same rule as the profile photo. Only Editor+ can upload/delete.
+    """
+
+    serializer_class = MediaItemSerializer
+
+    def get_queryset(self):
+        person = get_object_or_404(
+            Person, pk=self.kwargs["person_id"], tree_id=self.kwargs["tree_id"]
+        )
+        if person.is_living and self.get_role() not in EDITOR_ROLES:
+            return MediaItem.objects.none()
+        return person.media.all()
+
+    def perform_create(self, serializer):
+        person = get_object_or_404(
+            Person, pk=self.kwargs["person_id"], tree_id=self.kwargs["tree_id"]
+        )
+        serializer.save(person=person)
+
+
+class ShareLinkViewSet(viewsets.ModelViewSet):
+    """Owner-managed tokenized read-only links into a tree (branch or whole)."""
+
+    serializer_class = ShareLinkSerializer
+    permission_classes = [IsAuthenticated, IsTreeOwner]
+
+    def get_tree(self):
+        return get_object_or_404(Tree, pk=self.kwargs["tree_id"])
+
+    def get_queryset(self):
+        return ShareLink.objects.filter(tree_id=self.kwargs["tree_id"])
+
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        ctx["tree"] = self.get_tree()
+        return ctx
+
+    def perform_create(self, serializer):
+        serializer.save(tree=self.get_tree(), created_by=self.request.user)
+
+
+class PublicShareView(APIView):
+    """Anonymous, read-only view of a shared tree/branch by token.
+
+    Returns the tree name plus the branch's people and the relationships among
+    them, with living-person fields redacted (Viewer-equivalent privacy).
+    """
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def get(self, request, token=None):
+        share = get_object_or_404(ShareLink, token=token)
+        allowed_ids = share.allowed_person_ids()
+        people = Person.objects.filter(pk__in=allowed_ids, is_archived=False)
+        # Only relationships fully inside the branch, so no edges dangle out.
+        relationships = Relationship.objects.filter(
+            tree=share.tree, person_a_id__in=allowed_ids, person_b_id__in=allowed_ids
+        )
+        return Response(
+            {
+                "tree": {"id": share.tree_id, "name": share.tree.name},
+                "scope": "branch" if share.root_person_id else "whole_tree",
+                "root_person": share.root_person_id,
+                "people": PublicPersonSerializer(
+                    people, many=True, context={"request": request}
+                ).data,
+                "relationships": RelationshipSerializer(
+                    relationships, many=True
+                ).data,
+            }
+        )

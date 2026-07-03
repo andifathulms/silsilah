@@ -42,10 +42,12 @@ class Command(BaseCommand):
             owner.save()
             self.stdout.write(self.style.SUCCESS("Created user 'demo' / demopass123"))
 
-        editor, _ = User.objects.get_or_create(
+        editor, editor_created = User.objects.get_or_create(
             username="editor", defaults={"email": "editor@example.com"}
         )
-        if not editor.has_usable_password():
+        # get_or_create leaves an empty-string password, which counts as
+        # "usable" — so set it explicitly on first creation.
+        if editor_created:
             editor.set_password("editorpass123")
             editor.save()
 

@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Person, PersonChangeLog, Relationship
+from .models import MediaItem, Person, PersonChangeLog, Relationship, ShareLink
 
 
 @admin.register(Person)
@@ -20,3 +20,16 @@ class RelationshipAdmin(admin.ModelAdmin):
 class PersonChangeLogAdmin(admin.ModelAdmin):
     list_display = ("person", "changed_by", "changed_at")
     readonly_fields = ("person", "changed_by", "changed_at", "diff")
+
+
+@admin.register(MediaItem)
+class MediaItemAdmin(admin.ModelAdmin):
+    list_display = ("person", "caption", "event_date", "created_at")
+    list_filter = ("person__tree",)
+
+
+@admin.register(ShareLink)
+class ShareLinkAdmin(admin.ModelAdmin):
+    list_display = ("tree", "root_person", "include_ancestors", "token", "created_at")
+    list_filter = ("tree",)
+    readonly_fields = ("token",)
