@@ -5,13 +5,15 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { isAuthenticated } from "@/lib/auth";
-import type { Tree } from "@/lib/types";
+import type { Tree, User } from "@/lib/types";
 import TopBar from "@/components/TopBar";
 
 export default function HomePage() {
   const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
   const [trees, setTrees] = useState<Tree[] | null>(null);
   const [newName, setNewName] = useState("");
+  const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -19,65 +21,93 @@ export default function HomePage() {
       router.replace("/login");
       return;
     }
-    api
-      .listTrees()
-      .then(setTrees)
-      .catch((err) => setError(err.message));
+    api.me().then(setUser).catch(() => {});
+    api.listTrees().then(setTrees).catch((err) => setError(err.message));
   }, [router]);
 
   async function createTree(e: React.FormEvent) {
     e.preventDefault();
     if (!newName.trim()) return;
+    setCreating(true);
     try {
       const tree = await api.createTree(newName.trim());
       setNewName("");
       router.push(`/trees/${tree.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create tree");
+      setCreating(false);
     }
   }
+
+  const greeting = getGreeting();
 
   return (
     <>
       <TopBar />
       <div className="container">
-        <h1>Your family trees</h1>
+        <div className="animate-in">
+          <div className="eyebrow">{greeting}{user ? `, ${user.username}` : ""}</div>
+          <h1>Your family trees</h1>
+          <p className="muted" style={{ maxWidth: "52ch" }}>
+            Each tree is a private space for one family. Open one to keep growing it,
+            or plant a new one below.
+          </p>
+        </div>
+
         {error && <div className="error">{error}</div>}
 
-        <form onSubmit={createTree} className="card" style={{ marginBottom: "1.5rem" }}>
-          <label>Create a new tree</label>
-          <div className="row">
+        {/* Create tree */}
+        <form onSubmit={createTree} className="create-tree animate-in d1">
+          <div className="create-tree-mark">🌱</div>
+          <div style={{ flex: 1 }}>
+            <label>Plant a new tree</label>
             <input
               placeholder="e.g. The Rahman Family"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
             />
-            <button className="primary" type="submit">
-              Create
-            </button>
           </div>
+          <button className="primary" type="submit" disabled={creating}>
+            {creating ? "Creating…" : "Create tree"}
+          </button>
         </form>
 
+        {/* Trees grid */}
         {trees === null ? (
-          <p className="muted">Loading…</p>
+          <div className="tree-grid">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="card skeleton-card" />
+            ))}
+          </div>
         ) : trees.length === 0 ? (
-          <p className="muted">
-            No trees yet. Create one above to get started.
-          </p>
+          <div className="empty-state animate-in d2">
+            <div className="empty-mark">🌳</div>
+            <h3>No trees yet</h3>
+            <p className="muted">
+              Create your first tree above and add the people you love — you can
+              connect them later.
+            </p>
+          </div>
         ) : (
-          <div style={{ display: "grid", gap: "0.75rem" }}>
-            {trees.map((t) => (
-              <Link key={t.id} href={`/trees/${t.id}`} className="card" style={{ display: "block" }}>
-                <div className="row" style={{ justifyContent: "space-between" }}>
-                  <strong>{t.name}</strong>
-                  <span className={`badge ${t.my_role === "owner" ? "owner" : ""}`}>
+          <div className="tree-grid">
+            {trees.map((t, i) => (
+              <Link
+                key={t.id}
+                href={`/trees/${t.id}`}
+                className={`card card-hover tree-card animate-in d${Math.min(i + 1, 4)}`}
+              >
+                <div className="tree-card-top">
+                  <span className="tree-card-glyph">🌳</span>
+                  <span className={`badge ${t.my_role === "owner" ? "owner" : "forest"}`}>
                     {t.my_role}
                   </span>
                 </div>
-                <div className="muted" style={{ fontSize: "0.85rem" }}>
-                  {t.member_count} member{t.member_count === 1 ? "" : "s"}
-                  {t.is_public_link_enabled ? " · public link on" : ""}
+                <h3 className="tree-card-name">{t.name}</h3>
+                <div className="tree-card-meta muted">
+                  <span>👥 {t.member_count} member{t.member_count === 1 ? "" : "s"}</span>
+                  {t.is_public_link_enabled && <span>· 🔗 shared</span>}
                 </div>
+                <span className="tree-card-open">Open tree →</span>
               </Link>
             ))}
           </div>
@@ -85,4 +115,11 @@ export default function HomePage() {
       </div>
     </>
   );
+}
+
+function getGreeting(): string {
+  const h = new Date().getHours();
+  if (h < 12) return "Good morning";
+  if (h < 18) return "Good afternoon";
+  return "Good evening";
 }
