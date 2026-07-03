@@ -758,6 +758,35 @@ textarea { resize: vertical; }
   margin-top: 0.75rem;
 }
 
+/* ---------- Onboarding empty state ---------- */
+.onboarding {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2rem;
+  animation: fadeInUp 0.5s var(--ease-out) both;
+}
+.onboarding-steps {
+  list-style: none;
+  margin: 1.5rem 0 0;
+  padding: 1rem 1.25rem;
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--shadow-sm);
+  display: grid;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+.onboarding-steps strong { color: var(--forest-600); margin-right: 0.35rem; }
+
 /* ---------- People search ---------- */
 .tree-search-wrap {
   position: absolute;

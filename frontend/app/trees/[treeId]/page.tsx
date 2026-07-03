@@ -134,12 +134,31 @@ export default function TreePage() {
                 />
               </div>
             )}
-            <TreeView
-              people={people}
-              relationships={relationships}
-              mainId={mainId}
-              onSelect={setSelectedId}
-            />
+            {tree && people.length === 0 && canEdit ? (
+              <div className="onboarding">
+                <div className="empty-mark" style={{ fontSize: "3rem" }}>🌱</div>
+                <h2 style={{ margin: "0.25rem 0" }}>Let's plant your tree</h2>
+                <p className="muted" style={{ maxWidth: "34ch", margin: "0 auto 1rem" }}>
+                  The easiest way to start is with yourself. Then add your parents,
+                  and grow outward from there.
+                </p>
+                <button className="primary" onClick={() => setShowAddPerson(true)}>
+                  ✨ Start with yourself
+                </button>
+                <ol className="onboarding-steps">
+                  <li><strong>1.</strong> Add yourself</li>
+                  <li><strong>2.</strong> Select yourself, then <em>+ Parent</em> / <em>+ Spouse</em></li>
+                  <li><strong>3.</strong> Invite relatives to help fill it in</li>
+                </ol>
+              </div>
+            ) : (
+              <TreeView
+                people={people}
+                relationships={relationships}
+                mainId={mainId}
+                onSelect={setSelectedId}
+              />
+            )}
             {people.length > 0 && (
               <div className="tree-hint">Click a person to focus · drag to pan · scroll to zoom</div>
             )}
