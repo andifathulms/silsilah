@@ -10,6 +10,7 @@ import TopBar from "@/components/TopBar";
 import TreeView from "@/components/tree-view/TreeView";
 import PeopleSearch from "@/components/tree-view/PeopleSearch";
 import OnThisDay from "@/components/occasions/OnThisDay";
+import DataPanel from "@/components/data/DataPanel";
 import PersonDetailPanel from "@/components/person-detail/PersonDetailPanel";
 import Modal from "@/components/Modal";
 import PersonForm from "@/components/person-form/PersonForm";
@@ -35,6 +36,7 @@ export default function TreePage() {
   const [showMembers, setShowMembers] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [addRelative, setAddRelative] = useState<RelativeKind | null>(null);
+  const [showData, setShowData] = useState(false);
 
   const canEdit = tree?.my_role === "owner" || tree?.my_role === "editor";
   const isOwner = tree?.my_role === "owner";
@@ -103,6 +105,9 @@ export default function TreePage() {
                 </button>
                 <button onClick={() => setShowAddRel(true)} disabled={people.length < 2}>
                   🔗 <span className="hide-sm">Connect</span>
+                </button>
+                <button className="ghost" onClick={() => setShowData(true)}>
+                  📁 <span className="hide-sm">Data</span>
                 </button>
               </>
             )}
@@ -251,6 +256,22 @@ export default function TreePage() {
           onClose={() => setShowShare(false)}
         >
           <ShareLinksPanel treeId={treeId} people={people} />
+        </Modal>
+      )}
+
+      {showData && tree && (
+        <Modal
+          title="Import & export"
+          subtitle="Move this tree in or out with GEDCOM — the genealogy standard."
+          onClose={() => setShowData(false)}
+        >
+          <DataPanel
+            treeId={treeId}
+            treeName={tree.name}
+            onImported={() => {
+              reload();
+            }}
+          />
         </Modal>
       )}
 

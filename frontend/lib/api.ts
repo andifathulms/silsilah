@@ -31,6 +31,24 @@ export function mediaUrl(path: string | null): string | null {
   return `${origin}${path.startsWith("/") ? "" : "/"}${path}`;
 }
 
+/** Fetch the tree's GEDCOM export with auth and trigger a browser download. */
+export async function downloadGedcom(treeId: number, treeName: string): Promise<void> {
+  const token = getToken();
+  const res = await fetch(`${API_BASE}/trees/${treeId}/gedcom/`, {
+    headers: token ? { Authorization: `Token ${token}` } : {},
+  });
+  if (!res.ok) throw new Error(`Export failed (${res.status})`);
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${treeName.replace(/[^a-z0-9 _-]/gi, "") || "tree"}.ged`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
 /** Public share endpoint lives at the API origin but outside /trees. */
 export function fetchPublicShare(token: string): Promise<PublicShare> {
   return fetch(`${API_BASE}/share/${token}/`).then(async (res) => {
@@ -275,6 +293,17 @@ export const api = {
     request<void>(`/trees/${treeId}/people/${personId}/comments/${commentId}/`, {
       method: "DELETE",
     }),
+
+  // --- GEDCOM import ------------------------------------------------------
+  importGedcom: (treeId: number, file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return request<{
+      people_imported: number;
+      relationships_imported: number;
+      skipped: number;
+    }>(`/trees/${treeId}/gedcom/`, { method: "POST", body: form });
+  },
 
   // --- Share links --------------------------------------------------------
   listShareLinks: (treeId: number) =>
