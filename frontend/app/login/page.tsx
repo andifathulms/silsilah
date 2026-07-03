@@ -30,7 +30,13 @@ export default function LoginPage() {
           ? await api.login({ username, password })
           : await api.register({ username, email, password });
       setToken(res.token);
-      router.push("/");
+      const pendingInvite = window.localStorage.getItem("silsilah_pending_invite");
+      if (pendingInvite) {
+        window.localStorage.removeItem("silsilah_pending_invite");
+        router.push(`/join/${pendingInvite}`);
+      } else {
+        router.push("/");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {

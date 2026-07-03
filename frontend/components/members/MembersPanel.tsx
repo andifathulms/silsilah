@@ -2,18 +2,31 @@
 
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
-import type { Membership } from "@/lib/types";
+import type { Invitation, Membership } from "@/lib/types";
+
+function inviteUrl(token: string): string {
+  if (typeof window === "undefined") return `/join/${token}`;
+  return `${window.location.origin}/join/${token}`;
+}
 
 export default function MembersPanel({ treeId }: { treeId: number }) {
   const [members, setMembers] = useState<Membership[]>([]);
+  const [invites, setInvites] = useState<Invitation[]>([]);
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"editor" | "viewer">("viewer");
+  const [linkRole, setLinkRole] = useState<"editor" | "viewer">("viewer");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState<number | null>(null);
 
   async function load() {
     try {
-      setMembers(await api.listMembers(treeId));
+      const [m, i] = await Promise.all([
+        api.listMembers(treeId),
+        api.listInvitations(treeId).catch(() => []),
+      ]);
+      setMembers(m);
+      setInvites(i.filter((x) => !x.accepted_by));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load members");
     }
@@ -39,6 +52,32 @@ export default function MembersPanel({ treeId }: { treeId: number }) {
     }
   }
 
+  async function makeLink() {
+    setError(null);
+    try {
+      await api.createInvitation(treeId, linkRole);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not create link");
+    }
+  }
+
+  async function copyLink(inv: Invitation) {
+    const url = inviteUrl(inv.token);
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(inv.id);
+      setTimeout(() => setCopied(null), 1500);
+    } catch {
+      window.prompt("Copy this link:", url);
+    }
+  }
+
+  async function revokeLink(id: number) {
+    await api.deleteInvitation(treeId, id);
+    await load();
+  }
+
   return (
     <div>
       <div className="member-list">
@@ -60,8 +99,41 @@ export default function MembersPanel({ treeId }: { treeId: number }) {
 
       <div className="divider" />
 
+      {/* Invite by shareable link — no account needed up front */}
+      <label>Invite with a link</label>
+      <div className="row" style={{ marginBottom: invites.length ? "0.75rem" : 0 }}>
+        <select
+          value={linkRole}
+          onChange={(e) => setLinkRole(e.target.value as "editor" | "viewer")}
+          style={{ width: "auto" }}
+        >
+          <option value="viewer">Viewer</option>
+          <option value="editor">Editor</option>
+        </select>
+        <button className="primary" type="button" onClick={makeLink}>
+          🔗 Generate invite link
+        </button>
+      </div>
+
+      {invites.map((inv) => (
+        <div key={inv.id} className="share-link-row">
+          <div className="row spread wrap" style={{ gap: "0.5rem" }}>
+            <span className={`badge ${inv.role === "editor" ? "forest" : ""}`}>{inv.role} invite</span>
+            <span className="row" style={{ gap: "0.4rem" }}>
+              <button className="sm" onClick={() => copyLink(inv)}>
+                {copied === inv.id ? "✓ Copied" : "Copy link"}
+              </button>
+              <button className="danger sm" onClick={() => revokeLink(inv.id)}>Revoke</button>
+            </span>
+          </div>
+          <code className="share-link-url">{inviteUrl(inv.token)}</code>
+        </div>
+      ))}
+
+      <div className="divider" />
+
       <form onSubmit={invite}>
-        <label>Invite by email (they must have an account)</label>
+        <label>Or invite an existing member by email</label>
         <div className="row">
           <input
             type="email"

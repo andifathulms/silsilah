@@ -72,6 +72,27 @@ export interface Membership {
   role: Role;
 }
 
+export interface Invitation {
+  id: number;
+  tree: number;
+  tree_name: string;
+  email: string;
+  role: "editor" | "viewer";
+  token: string;
+  invited_by_username: string | null;
+  accepted_by: number | null;
+  accepted_at: string | null;
+  created_at: string;
+}
+
+export interface InvitePreview {
+  tree: { id: number; name: string };
+  role: "editor" | "viewer";
+  invited_by: string | null;
+  already_accepted: boolean;
+  already_member: boolean;
+}
+
 export interface MediaItem {
   id: number;
   person: number;

@@ -3,6 +3,8 @@
 import { getToken } from "./auth";
 import type {
   ChangeLogEntry,
+  Invitation,
+  InvitePreview,
   MediaItem,
   Membership,
   Person,
@@ -125,6 +127,27 @@ export const api = {
     request<Membership>(`/trees/${treeId}/invite/`, {
       method: "POST",
       body: JSON.stringify({ email, role }),
+    }),
+
+  // --- Invite links -------------------------------------------------------
+  listInvitations: (treeId: number) =>
+    request<Invitation[]>(`/trees/${treeId}/invitations/`),
+
+  createInvitation: (treeId: number, role: "editor" | "viewer") =>
+    request<Invitation>(`/trees/${treeId}/invitations/`, {
+      method: "POST",
+      body: JSON.stringify({ role }),
+    }),
+
+  deleteInvitation: (treeId: number, id: number) =>
+    request<void>(`/trees/${treeId}/invitations/${id}/`, { method: "DELETE" }),
+
+  previewInvitation: (token: string) =>
+    request<InvitePreview>(`/invitations/${token}/`),
+
+  acceptInvitation: (token: string) =>
+    request<{ tree: number; role: string }>(`/invitations/${token}/accept/`, {
+      method: "POST",
     }),
 
   // --- People -------------------------------------------------------------
