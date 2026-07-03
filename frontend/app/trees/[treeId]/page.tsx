@@ -13,6 +13,7 @@ import PersonDetailPanel from "@/components/person-detail/PersonDetailPanel";
 import Modal from "@/components/Modal";
 import PersonForm from "@/components/person-form/PersonForm";
 import RelationshipForm from "@/components/relationship-form/RelationshipForm";
+import AddRelativeForm, { RelativeKind } from "@/components/relationship-form/AddRelativeForm";
 import MembersPanel from "@/components/members/MembersPanel";
 import ShareLinksPanel from "@/components/share/ShareLinksPanel";
 
@@ -32,6 +33,7 @@ export default function TreePage() {
   const [showAddRel, setShowAddRel] = useState(false);
   const [showMembers, setShowMembers] = useState(false);
   const [showShare, setShowShare] = useState(false);
+  const [addRelative, setAddRelative] = useState<RelativeKind | null>(null);
 
   const canEdit = tree?.my_role === "owner" || tree?.my_role === "editor";
   const isOwner = tree?.my_role === "owner";
@@ -147,6 +149,8 @@ export default function TreePage() {
               <PersonDetailPanel
                 treeId={treeId}
                 person={selected}
+                canEdit={canEdit}
+                onAddRelative={(kind) => setAddRelative(kind)}
                 onRecenter={(id) => {
                   setMainId(id);
                   setSelectedId(id);
@@ -225,6 +229,26 @@ export default function TreePage() {
           onClose={() => setShowShare(false)}
         >
           <ShareLinksPanel treeId={treeId} people={people} />
+        </Modal>
+      )}
+
+      {addRelative && selected && (
+        <Modal
+          title={`Add ${addRelative}`}
+          subtitle="Creates the person and connects them in one step."
+          onClose={() => setAddRelative(null)}
+        >
+          <AddRelativeForm
+            treeId={treeId}
+            anchor={selected}
+            kind={addRelative}
+            onCancel={() => setAddRelative(null)}
+            onDone={async (createdId) => {
+              setAddRelative(null);
+              await reload();
+              setSelectedId(createdId);
+            }}
+          />
         </Modal>
       )}
     </>

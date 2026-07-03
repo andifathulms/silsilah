@@ -742,12 +742,20 @@ textarea { resize: vertical; }
 }
 .rel-people { font-size: 0.9rem; }
 
-.detail-actions {
+.quick-add {
   display: flex;
-  gap: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.4rem;
   margin-top: 1rem;
   padding-top: 1rem;
   border-top: 1px solid var(--border);
+}
+.quick-add button { flex: 1; min-width: 84px; }
+
+.detail-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
 }
 
 /* ---------- People search ---------- */

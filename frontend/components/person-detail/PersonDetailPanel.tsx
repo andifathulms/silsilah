@@ -8,7 +8,9 @@ import type { Person, Relatives } from "@/lib/types";
 interface Props {
   treeId: number;
   person: Person;
+  canEdit?: boolean;
   onRecenter?: (personId: number) => void;
+  onAddRelative?: (kind: "parent" | "child" | "spouse") => void;
 }
 
 function RelativeRow({ label, people }: { label: string; people: Person[] }) {
@@ -25,7 +27,13 @@ function RelativeRow({ label, people }: { label: string; people: Person[] }) {
  * Compact, elegant panel shown alongside the tree. Derived relationships come
  * from the backend `/relatives/` endpoint — never recomputed in the browser.
  */
-export default function PersonDetailPanel({ treeId, person, onRecenter }: Props) {
+export default function PersonDetailPanel({
+  treeId,
+  person,
+  canEdit,
+  onRecenter,
+  onAddRelative,
+}: Props) {
   const [relatives, setRelatives] = useState<Relatives | null>(null);
 
   useEffect(() => {
@@ -89,6 +97,15 @@ export default function PersonDetailPanel({ treeId, person, onRecenter }: Props)
         </div>
       ) : (
         <p className="muted" style={{ fontSize: "0.85rem" }}>Loading relatives…</p>
+      )}
+
+      {canEdit && onAddRelative && (
+        <div className="quick-add">
+          <span className="rel-label" style={{ alignSelf: "center" }}>Add</span>
+          <button className="sm" onClick={() => onAddRelative("parent")}>+ Parent</button>
+          <button className="sm" onClick={() => onAddRelative("spouse")}>+ Spouse</button>
+          <button className="sm" onClick={() => onAddRelative("child")}>+ Child</button>
+        </div>
       )}
 
       <div className="detail-actions">
