@@ -2,6 +2,7 @@ from django.urls import path
 
 from .views import (
     CommentViewSet,
+    GedcomView,
     LifeEventViewSet,
     MediaItemViewSet,
     OnThisDayView,
@@ -116,6 +117,8 @@ urlpatterns = [
     ),
     # Family occasions
     path("trees/<int:tree_id>/on-this-day/", OnThisDayView.as_view(), name="on-this-day"),
+    # GEDCOM import/export
+    path("trees/<int:tree_id>/gedcom/", GedcomView.as_view(), name="gedcom"),
     # Public, tokenized, anonymous read-only access
     path("share/<str:token>/", PublicShareView.as_view(), name="public-share"),
 ]

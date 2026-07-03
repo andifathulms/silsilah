@@ -257,6 +257,48 @@ class ShareLinkViewSet(viewsets.ModelViewSet):
         serializer.save(tree=self.get_tree(), created_by=self.request.user)
 
 
+class GedcomView(APIView):
+    """Export the tree as GEDCOM (GET) or import GEDCOM into it (POST).
+
+    Both require Editor+ — export includes full detail, import writes data.
+    """
+
+    permission_classes = [IsAuthenticated, IsTreeMember]
+
+    def get(self, request, tree_id=None):
+        from django.http import HttpResponse
+
+        from .gedcom import export_gedcom
+
+        tree = get_object_or_404(Tree, pk=tree_id)
+        if tree.role_for(request.user) not in EDITOR_ROLES:
+            return Response(
+                {"detail": "Only editors and owners can export."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        text = export_gedcom(tree)
+        resp = HttpResponse(text, content_type="text/vnd.familysearch.gedcom")
+        safe = "".join(c for c in tree.name if c.isalnum() or c in " -_").strip() or "tree"
+        resp["Content-Disposition"] = f'attachment; filename="{safe}.ged"'
+        return resp
+
+    def post(self, request, tree_id=None):
+        from .gedcom import import_gedcom
+
+        tree = get_object_or_404(Tree, pk=tree_id)
+        if tree.role_for(request.user) not in EDITOR_ROLES:
+            return Response(
+                {"detail": "Only editors and owners can import."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        upload = request.FILES.get("file")
+        text = upload.read().decode("utf-8", errors="replace") if upload else request.data.get("text", "")
+        if not text.strip():
+            return Response({"detail": "No GEDCOM content provided."}, status=400)
+        result = import_gedcom(tree, text, user=request.user)
+        return Response(result, status=status.HTTP_201_CREATED)
+
+
 class OnThisDayView(APIView):
     """Upcoming family occasions in the next ~45 days: birthdays of living
     people, wedding anniversaries, and memorial (death) anniversaries.
