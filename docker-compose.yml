@@ -1,3 +1,10 @@
+# Ports are chosen to avoid clashes with other local stacks. Override any of
+# them via env (e.g. BACKEND_PORT=8200 docker compose up) if needed.
+#   Frontend  -> ${FRONTEND_PORT:-3100}
+#   Backend   -> ${BACKEND_PORT:-8100}
+#   Postgres  -> ${POSTGRES_PORT:-5540}
+#   MinIO     -> ${MINIO_PORT:-9100} (api) / ${MINIO_CONSOLE_PORT:-9101} (ui)
+
 services:
   db:
     image: postgres:16
@@ -6,9 +13,14 @@ services:
       POSTGRES_USER: silsilah
       POSTGRES_PASSWORD: silsilah
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5540}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U silsilah"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   minio:
     image: minio/minio:latest
@@ -17,25 +29,41 @@ services:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "${MINIO_PORT:-9100}:9000"
+      - "${MINIO_CONSOLE_PORT:-9101}:9001"
     volumes:
       - miniodata:/data
 
   backend:
     build: ./backend
-    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py seed_demo --fresh || true;
+             python manage.py runserver 0.0.0.0:8000"
     environment:
       POSTGRES_DB: silsilah
       POSTGRES_USER: silsilah
       POSTGRES_PASSWORD: silsilah
       POSTGRES_HOST: db
-    volumes:
-      - ./backend:/app
+      POSTGRES_PORT: 5432
+      DJANGO_DEBUG: "true"
+      DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1,backend"
+      CORS_ALLOWED_ORIGINS: "http://localhost:${FRONTEND_PORT:-3100},http://127.0.0.1:${FRONTEND_PORT:-3100}"
     ports:
-      - "8000:8000"
+      - "${BACKEND_PORT:-8100}:8000"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    environment:
+      # Browser-side calls hit the host-published backend port.
+      NEXT_PUBLIC_API_BASE: "http://localhost:${BACKEND_PORT:-8100}/api"
+    ports:
+      - "${FRONTEND_PORT:-3100}:3000"
+    depends_on:
+      - backend
 
 volumes:
   pgdata:
