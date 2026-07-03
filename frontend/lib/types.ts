@@ -140,6 +140,17 @@ export interface PublicPerson extends Person {
   media: MediaItem[];
 }
 
+export interface Occasion {
+  kind: "birthday" | "anniversary" | "memorial";
+  person: number;
+  name: string;
+  date: string;
+  days_until: number;
+  turning?: number;
+  years?: number;
+  years_ago?: number;
+}
+
 export interface PublicShare {
   tree: { id: number; name: string };
   scope: "branch" | "whole_tree";

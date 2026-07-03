@@ -9,6 +9,7 @@ import type { Person, Relationship, Tree } from "@/lib/types";
 import TopBar from "@/components/TopBar";
 import TreeView from "@/components/tree-view/TreeView";
 import PeopleSearch from "@/components/tree-view/PeopleSearch";
+import OnThisDay from "@/components/occasions/OnThisDay";
 import PersonDetailPanel from "@/components/person-detail/PersonDetailPanel";
 import Modal from "@/components/Modal";
 import PersonForm from "@/components/person-form/PersonForm";
@@ -120,6 +121,8 @@ export default function TreePage() {
             )}
           </div>
         </header>
+
+        {tree && people.length > 0 && <OnThisDay treeId={treeId} />}
 
         <div className="tree-layout animate-in d2">
           <div className="tree-stage">

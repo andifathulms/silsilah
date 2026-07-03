@@ -8,6 +8,7 @@ import type {
   LifeEvent,
   MediaItem,
   Membership,
+  Occasion,
   Person,
   PublicShare,
   Relationship,
@@ -105,6 +106,11 @@ export const api = {
     request<Paginated<Tree> | Tree[]>("/trees/").then(unwrap),
 
   getTree: (treeId: number) => request<Tree>(`/trees/${treeId}/`),
+
+  onThisDay: (treeId: number) =>
+    request<{ today: string; occasions: Occasion[] }>(
+      `/trees/${treeId}/on-this-day/`
+    ),
 
   createTree: (name: string) =>
     request<Tree>("/trees/", {
