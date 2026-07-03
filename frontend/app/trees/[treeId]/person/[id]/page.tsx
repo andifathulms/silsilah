@@ -11,6 +11,7 @@ import PersonForm from "@/components/person-form/PersonForm";
 import MediaGallery from "@/components/media/MediaGallery";
 import RelationshipCalculator from "@/components/relationship-calculator/RelationshipCalculator";
 import LifeTimeline from "@/components/timeline/LifeTimeline";
+import Comments from "@/components/comments/Comments";
 
 const FIELD_LABELS: Record<string, string> = {
   name: "Name",
@@ -236,6 +237,11 @@ export default function PersonDetailPage() {
             canEdit={canEdit}
             redacted={person._private_redacted}
           />
+        </div>
+
+        <div className="card animate-in d4" style={{ marginTop: "1.25rem" }}>
+          <h3 style={{ marginTop: 0 }}>💬 Stories & memories</h3>
+          <Comments treeId={treeId} personId={personId} personName={person.name} canPost={canEdit} />
         </div>
 
         {canEdit && (

@@ -703,6 +703,17 @@ textarea { resize: vertical; }
 .diff-arrow { color: var(--gold-600); }
 .diff-new { color: var(--forest-700); font-weight: 600; }
 
+/* ---------- Comments ---------- */
+.comment-list { display: grid; gap: 0.5rem; }
+.comment {
+  display: flex;
+  gap: 0.7rem;
+  padding: 0.75rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+}
+
 /* ---------- Life timeline ---------- */
 .lifeline { position: relative; display: grid; gap: 0.25rem; }
 .lifeline::before {

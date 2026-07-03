@@ -102,6 +102,15 @@ export interface MediaItem {
   created_at: string;
 }
 
+export interface Comment {
+  id: number;
+  person: number;
+  author: number | null;
+  author_username: string | null;
+  body: string;
+  created_at: string;
+}
+
 export type LifeEventType =
   | "birth"
   | "marriage"

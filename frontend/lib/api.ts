@@ -3,6 +3,7 @@
 import { getToken } from "./auth";
 import type {
   ChangeLogEntry,
+  Comment,
   Invitation,
   InvitePreview,
   LifeEvent,
@@ -255,6 +256,23 @@ export const api = {
 
   deleteEvent: (treeId: number, personId: number, eventId: number) =>
     request<void>(`/trees/${treeId}/people/${personId}/events/${eventId}/`, {
+      method: "DELETE",
+    }),
+
+  // --- Comments / stories -------------------------------------------------
+  listComments: (treeId: number, personId: number) =>
+    request<Paginated<Comment> | Comment[]>(
+      `/trees/${treeId}/people/${personId}/comments/`
+    ).then(unwrap),
+
+  createComment: (treeId: number, personId: number, body: string) =>
+    request<Comment>(`/trees/${treeId}/people/${personId}/comments/`, {
+      method: "POST",
+      body: JSON.stringify({ body }),
+    }),
+
+  deleteComment: (treeId: number, personId: number, commentId: number) =>
+    request<void>(`/trees/${treeId}/people/${personId}/comments/${commentId}/`, {
       method: "DELETE",
     }),
 
