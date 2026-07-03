@@ -8,6 +8,7 @@ import { isAuthenticated } from "@/lib/auth";
 import type { ChangeLogEntry, Person, Relatives, Tree } from "@/lib/types";
 import TopBar from "@/components/TopBar";
 import PersonForm from "@/components/person-form/PersonForm";
+import MediaGallery from "@/components/media/MediaGallery";
 
 function ChangeLog({ entries }: { entries: ChangeLogEntry[] }) {
   if (!entries.length) return <p className="muted">No changes recorded yet.</p>;
@@ -152,6 +153,16 @@ export default function PersonDetailPage() {
               <p className="muted">Loading…</p>
             )}
           </div>
+        </div>
+
+        <div className="card" style={{ marginTop: "1rem" }}>
+          <h3 style={{ marginTop: 0 }}>Photos</h3>
+          <MediaGallery
+            treeId={treeId}
+            personId={personId}
+            canEdit={canEdit}
+            redacted={person._private_redacted}
+          />
         </div>
 
         {canEdit && (
