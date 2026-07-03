@@ -3,16 +3,36 @@
 import { getToken } from "./auth";
 import type {
   ChangeLogEntry,
+  MediaItem,
   Membership,
   Person,
+  PublicShare,
   Relationship,
   Relatives,
+  ShareLink,
   Tree,
   User,
 } from "./types";
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000/api";
+
+/** The server serves media at the site root (e.g. /media/...), not under
+ * /api — resolve a returned relative image path against the API origin. */
+export function mediaUrl(path: string | null): string | null {
+  if (!path) return null;
+  if (/^https?:\/\//.test(path)) return path;
+  const origin = API_BASE.replace(/\/api\/?$/, "");
+  return `${origin}${path.startsWith("/") ? "" : "/"}${path}`;
+}
+
+/** Public share endpoint lives at the API origin but outside /trees. */
+export function fetchPublicShare(token: string): Promise<PublicShare> {
+  return fetch(`${API_BASE}/share/${token}/`).then(async (res) => {
+    if (!res.ok) throw new Error(`Share not found (${res.status})`);
+    return res.json();
+  });
+}
 
 interface Paginated<T> {
   count: number;
@@ -155,6 +175,54 @@ export const api = {
 
   deleteRelationship: (treeId: number, relId: number) =>
     request<void>(`/trees/${treeId}/relationships/${relId}/`, {
+      method: "DELETE",
+    }),
+
+  // --- Media (per-person / life-event photos) -----------------------------
+  listMedia: (treeId: number, personId: number) =>
+    request<Paginated<MediaItem> | MediaItem[]>(
+      `/trees/${treeId}/people/${personId}/media/`
+    ).then(unwrap),
+
+  uploadMedia: (
+    treeId: number,
+    personId: number,
+    file: File,
+    caption: string,
+    eventDate: string
+  ) => {
+    const form = new FormData();
+    form.append("image", file);
+    if (caption) form.append("caption", caption);
+    if (eventDate) form.append("event_date", eventDate);
+    return request<MediaItem>(`/trees/${treeId}/people/${personId}/media/`, {
+      method: "POST",
+      body: form,
+    });
+  },
+
+  deleteMedia: (treeId: number, personId: number, mediaId: number) =>
+    request<void>(`/trees/${treeId}/people/${personId}/media/${mediaId}/`, {
+      method: "DELETE",
+    }),
+
+  // --- Share links --------------------------------------------------------
+  listShareLinks: (treeId: number) =>
+    request<Paginated<ShareLink> | ShareLink[]>(
+      `/trees/${treeId}/share-links/`
+    ).then(unwrap),
+
+  createShareLink: (
+    treeId: number,
+    body: { root_person?: number | null; include_ancestors?: boolean }
+  ) =>
+    request<ShareLink>(`/trees/${treeId}/share-links/`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  deleteShareLink: (treeId: number, id: number) =>
+    request<void>(`/trees/${treeId}/share-links/${id}/`, {
       method: "DELETE",
     }),
 };

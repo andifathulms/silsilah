@@ -71,3 +71,34 @@ export interface Membership {
   email: string;
   role: Role;
 }
+
+export interface MediaItem {
+  id: number;
+  person: number;
+  image: string;
+  caption: string;
+  event_date: string | null;
+  created_at: string;
+}
+
+export interface ShareLink {
+  id: number;
+  token: string;
+  root_person: number | null;
+  root_person_name: string | null;
+  include_ancestors: boolean;
+  scope: "branch" | "whole_tree";
+  created_at: string;
+}
+
+export interface PublicPerson extends Person {
+  media: MediaItem[];
+}
+
+export interface PublicShare {
+  tree: { id: number; name: string };
+  scope: "branch" | "whole_tree";
+  root_person: number | null;
+  people: PublicPerson[];
+  relationships: Relationship[];
+}
