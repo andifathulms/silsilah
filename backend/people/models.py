@@ -1,8 +1,14 @@
+import uuid
+
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models
 
 from trees.models import Tree
+
+
+def _share_token():
+    return uuid.uuid4().hex
 
 
 class Person(models.Model):
@@ -85,6 +91,51 @@ class Person(models.Model):
         for parent in self.parents():
             grandparent_ids.update(parent.parents().values_list("id", flat=True))
         return Person.objects.filter(pk__in=grandparent_ids)
+
+    def branch_ids(self, include_ancestors=False):
+        """Return the set of Person ids in this person's branch, for
+        branch-scoped share links: this person, all descendants (walking
+        parent_child edges down), plus each of those people's spouses.
+        Optionally include ancestors walking up.
+        """
+        seen = {self.id}
+
+        # Walk descendants downward.
+        frontier = {self.id}
+        while frontier:
+            child_ids = set(
+                Relationship.objects.filter(
+                    type=Relationship.TYPE_PARENT_CHILD, person_a_id__in=frontier
+                ).values_list("person_b_id", flat=True)
+            )
+            new = child_ids - seen
+            seen |= new
+            frontier = new
+
+        if include_ancestors:
+            frontier = {self.id}
+            while frontier:
+                parent_ids = set(
+                    Relationship.objects.filter(
+                        type=Relationship.TYPE_PARENT_CHILD, person_b_id__in=frontier
+                    ).values_list("person_a_id", flat=True)
+                )
+                new = parent_ids - seen
+                seen |= new
+                frontier = new
+
+        # Include spouses of everyone in the branch so couples aren't split.
+        spouse_ids = set(
+            Relationship.objects.filter(
+                type=Relationship.TYPE_SPOUSE, person_a_id__in=seen
+            ).values_list("person_b_id", flat=True)
+        ) | set(
+            Relationship.objects.filter(
+                type=Relationship.TYPE_SPOUSE, person_b_id__in=seen
+            ).values_list("person_a_id", flat=True)
+        )
+        seen |= spouse_ids
+        return seen
 
 
 class Relationship(models.Model):
@@ -183,3 +234,64 @@ class PersonChangeLog(models.Model):
 
     def __str__(self):
         return f"Change to {self.person} at {self.changed_at}"
+
+
+class MediaItem(models.Model):
+    """A photo attached to a Person — either a general photo or one tied to a
+    specific life event/note via caption + event_date (PRD #22).
+
+    Media for living people is subject to the same privacy rule as their photo
+    field: hidden from Viewers and public visitors (handled in the view).
+    """
+
+    person = models.ForeignKey(
+        Person, on_delete=models.CASCADE, related_name="media"
+    )
+    image = models.ImageField(upload_to="media/")
+    caption = models.CharField(max_length=300, blank=True)
+    event_date = models.DateField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["event_date", "created_at"]
+
+    def __str__(self):
+        return f"Media for {self.person}: {self.caption or self.image.name}"
+
+
+class ShareLink(models.Model):
+    """A tokenized, read-only public link into a tree.
+
+    ``root_person`` scopes the link to a single branch (that person plus their
+    descendants and spouses, optionally ancestors); leaving it null shares the
+    whole tree. Anonymous visitors see the same redaction a Viewer would.
+    """
+
+    tree = models.ForeignKey(
+        Tree, on_delete=models.CASCADE, related_name="share_links"
+    )
+    token = models.CharField(max_length=32, unique=True, default=_share_token)
+    root_person = models.ForeignKey(
+        Person, on_delete=models.CASCADE, null=True, blank=True,
+        related_name="share_links",
+    )
+    include_ancestors = models.BooleanField(default=False)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        scope = f"branch of {self.root_person}" if self.root_person else "whole tree"
+        return f"ShareLink({scope})"
+
+    def allowed_person_ids(self):
+        """The set of Person ids this link exposes."""
+        if self.root_person_id:
+            return self.root_person.branch_ids(
+                include_ancestors=self.include_ancestors
+            )
+        return set(
+            self.tree.people.filter(is_archived=False).values_list("id", flat=True)
+        )
