@@ -3,6 +3,7 @@ from django.urls import path
 from .views import (
     LifeEventViewSet,
     MediaItemViewSet,
+    OnThisDayView,
     PersonViewSet,
     PublicShareView,
     RelationshipViewSet,
@@ -98,6 +99,8 @@ urlpatterns = [
         share_detail,
         name="sharelink-detail",
     ),
+    # Family occasions
+    path("trees/<int:tree_id>/on-this-day/", OnThisDayView.as_view(), name="on-this-day"),
     # Public, tokenized, anonymous read-only access
     path("share/<str:token>/", PublicShareView.as_view(), name="public-share"),
 ]

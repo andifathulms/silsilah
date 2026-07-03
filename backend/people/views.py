@@ -1,4 +1,5 @@
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -221,6 +222,85 @@ class ShareLinkViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(tree=self.get_tree(), created_by=self.request.user)
+
+
+class OnThisDayView(APIView):
+    """Upcoming family occasions in the next ~45 days: birthdays of living
+    people, wedding anniversaries, and memorial (death) anniversaries.
+
+    Living-people birthdays are only included for Editor+ (they're private to
+    Viewers), matching the field-level privacy rule.
+    """
+
+    permission_classes = [AllowAny, IsTreeMember]
+
+    def get(self, request, tree_id=None):
+        import datetime
+
+        tree = get_object_or_404(Tree, pk=tree_id)
+        role = tree.role_for(request.user)
+        is_editor = role in EDITOR_ROLES
+        today = timezone.localdate()
+        window = 45
+
+        def days_until(d):
+            year = today.year
+            month, day = d.month, d.day
+            try:
+                nxt = datetime.date(year, month, day)
+            except ValueError:
+                nxt = datetime.date(year, month, 28)
+            if nxt < today:
+                try:
+                    nxt = datetime.date(year + 1, month, day)
+                except ValueError:
+                    nxt = datetime.date(year + 1, month, 28)
+            return (nxt - today).days
+
+        occasions = []
+        people = tree.people.filter(is_archived=False)
+
+        for p in people:
+            if p.birth_date and p.is_living and is_editor:
+                du = days_until(p.birth_date)
+                if du <= window:
+                    occasions.append({
+                        "kind": "birthday",
+                        "person": p.id,
+                        "name": p.name,
+                        "date": p.birth_date.replace(year=today.year).isoformat(),
+                        "days_until": du,
+                        "turning": today.year - p.birth_date.year,
+                    })
+            if p.death_date and not p.is_living:
+                du = days_until(p.death_date)
+                if du <= window:
+                    occasions.append({
+                        "kind": "memorial",
+                        "person": p.id,
+                        "name": p.name,
+                        "date": p.death_date.replace(year=today.year).isoformat(),
+                        "days_until": du,
+                        "years_ago": today.year - p.death_date.year,
+                    })
+
+        spouse_rels = tree.relationships.filter(
+            type=Relationship.TYPE_SPOUSE, end_date__isnull=True, start_date__isnull=False
+        ).select_related("person_a", "person_b")
+        for r in spouse_rels:
+            du = days_until(r.start_date)
+            if du <= window:
+                occasions.append({
+                    "kind": "anniversary",
+                    "person": r.person_a_id,
+                    "name": f"{r.person_a.name} & {r.person_b.name}",
+                    "date": r.start_date.replace(year=today.year).isoformat(),
+                    "days_until": du,
+                    "years": today.year - r.start_date.year,
+                })
+
+        occasions.sort(key=lambda o: o["days_until"])
+        return Response({"today": today.isoformat(), "occasions": occasions[:12]})
 
 
 class PublicShareView(APIView):
