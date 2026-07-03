@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { clearToken } from "@/lib/auth";
 import type { User } from "@/lib/types";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function TopBar() {
   const router = useRouter();
@@ -35,6 +36,8 @@ export default function TopBar() {
         <span className="brand-mark">🌳</span> Silsilah
       </Link>
 
+      <div className="row" style={{ gap: "0.5rem" }}>
+      <ThemeToggle />
       <div style={{ position: "relative" }}>
         <button
           className="ghost"
@@ -69,6 +72,7 @@ export default function TopBar() {
             </div>
           </>
         )}
+      </div>
       </div>
       </div>
     </header>
