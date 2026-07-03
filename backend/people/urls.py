@@ -16,6 +16,7 @@ person_siblings = PersonViewSet.as_view({"get": "siblings"})
 person_relatives = PersonViewSet.as_view({"get": "relatives"})
 person_changelog = PersonViewSet.as_view({"get": "changelog"})
 person_archive = PersonViewSet.as_view({"post": "archive"})
+person_relationship = PersonViewSet.as_view({"get": "relationship_to"})
 
 rel_list = RelationshipViewSet.as_view({"get": "list", "post": "create"})
 rel_detail = RelationshipViewSet.as_view(
@@ -50,6 +51,11 @@ urlpatterns = [
         "trees/<int:tree_id>/people/<int:pk>/archive/",
         person_archive,
         name="person-archive",
+    ),
+    path(
+        "trees/<int:tree_id>/people/<int:pk>/relationship-to/<int:other_id>/",
+        person_relationship,
+        name="person-relationship",
     ),
     path("trees/<int:tree_id>/relationships/", rel_list, name="relationship-list"),
     path(

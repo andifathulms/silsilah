@@ -100,6 +100,33 @@ class PersonViewSet(TreeScopedMixin, viewsets.ModelViewSet):
             }
         )
 
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path="relationship-to/(?P<other_id>[0-9]+)",
+    )
+    def relationship_to(self, request, tree_id=None, pk=None, other_id=None):
+        from .relationship_utils import describe_relationship
+
+        person = self.get_object()
+        other = get_object_or_404(Person, pk=other_id, tree_id=tree_id)
+        label = describe_relationship(person, other, int(tree_id))
+        return Response(
+            {
+                "person": person.id,
+                "other": other.id,
+                "other_name": other.name,
+                "label": label,
+                "sentence": f"{other.name} is {person.name}'s {label}."
+                if label not in ("the same person", "not directly related by blood")
+                else (
+                    f"{other.name} and {person.name} are the same person."
+                    if label == "the same person"
+                    else f"{other.name} is {label} to {person.name}."
+                ),
+            }
+        )
+
     @action(detail=True, methods=["get"], url_path="changelog")
     def changelog(self, request, tree_id=None, pk=None):
         # Changelog visible to Editor+ only (PRD #9).
