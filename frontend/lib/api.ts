@@ -11,6 +11,7 @@ import type {
   Membership,
   Occasion,
   Person,
+  PlaceGroup,
   PublicShare,
   Relationship,
   Relatives,
@@ -130,6 +131,9 @@ export const api = {
     request<{ today: string; occasions: Occasion[] }>(
       `/trees/${treeId}/on-this-day/`
     ),
+
+  places: (treeId: number) =>
+    request<{ places: PlaceGroup[] }>(`/trees/${treeId}/places/`),
 
   createTree: (name: string) =>
     request<Tree>("/trees/", {

@@ -7,6 +7,7 @@ from .views import (
     MediaItemViewSet,
     OnThisDayView,
     PersonViewSet,
+    PlacesView,
     PublicShareView,
     RelationshipViewSet,
     ShareLinkViewSet,
@@ -119,6 +120,8 @@ urlpatterns = [
     path("trees/<int:tree_id>/on-this-day/", OnThisDayView.as_view(), name="on-this-day"),
     # GEDCOM import/export
     path("trees/<int:tree_id>/gedcom/", GedcomView.as_view(), name="gedcom"),
+    # Places / roots
+    path("trees/<int:tree_id>/places/", PlacesView.as_view(), name="places"),
     # Public, tokenized, anonymous read-only access
     path("share/<str:token>/", PublicShareView.as_view(), name="public-share"),
 ]

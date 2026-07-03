@@ -257,6 +257,40 @@ class ShareLinkViewSet(viewsets.ModelViewSet):
         serializer.save(tree=self.get_tree(), created_by=self.request.user)
 
 
+class PlacesView(APIView):
+    """Aggregate the family's places from life events — a roots/migration map.
+
+    Living people's events are excluded for non-Editors (privacy).
+    """
+
+    permission_classes = [AllowAny, IsTreeMember]
+
+    def get(self, request, tree_id=None):
+        tree = get_object_or_404(Tree, pk=tree_id)
+        is_editor = tree.role_for(request.user) in EDITOR_ROLES
+
+        events = LifeEvent.objects.filter(
+            person__tree=tree, person__is_archived=False
+        ).exclude(place="").select_related("person")
+        if not is_editor:
+            events = events.exclude(person__is_living=True)
+
+        places = {}
+        for e in events:
+            key = e.place.strip()
+            bucket = places.setdefault(key, {"place": key, "count": 0, "entries": []})
+            bucket["count"] += 1
+            bucket["entries"].append({
+                "person": e.person_id,
+                "name": e.person.name,
+                "kind": e.get_type_display(),
+                "date": e.date.isoformat() if e.date else None,
+            })
+
+        result = sorted(places.values(), key=lambda p: -p["count"])
+        return Response({"places": result})
+
+
 class GedcomView(APIView):
     """Export the tree as GEDCOM (GET) or import GEDCOM into it (POST).
 

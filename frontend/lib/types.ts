@@ -160,6 +160,12 @@ export interface Occasion {
   years_ago?: number;
 }
 
+export interface PlaceGroup {
+  place: string;
+  count: number;
+  entries: { person: number; name: string; kind: string; date: string | null }[];
+}
+
 export interface PublicShare {
   tree: { id: number; name: string };
   scope: "branch" | "whole_tree";

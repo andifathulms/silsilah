@@ -11,6 +11,7 @@ import TreeView from "@/components/tree-view/TreeView";
 import PeopleSearch from "@/components/tree-view/PeopleSearch";
 import OnThisDay from "@/components/occasions/OnThisDay";
 import DataPanel from "@/components/data/DataPanel";
+import PlacesPanel from "@/components/places/PlacesPanel";
 import PersonDetailPanel from "@/components/person-detail/PersonDetailPanel";
 import Modal from "@/components/Modal";
 import PersonForm from "@/components/person-form/PersonForm";
@@ -37,6 +38,7 @@ export default function TreePage() {
   const [showShare, setShowShare] = useState(false);
   const [addRelative, setAddRelative] = useState<RelativeKind | null>(null);
   const [showData, setShowData] = useState(false);
+  const [showPlaces, setShowPlaces] = useState(false);
 
   const canEdit = tree?.my_role === "owner" || tree?.my_role === "editor";
   const isOwner = tree?.my_role === "owner";
@@ -99,9 +101,14 @@ export default function TreePage() {
           </div>
           <div className="tree-toolbar">
             {people.length > 0 && (
-              <Link href={`/trees/${treeId}/print`}>
-                <button className="ghost">🖨 <span className="hide-sm">Print</span></button>
-              </Link>
+              <>
+                <button className="ghost" onClick={() => setShowPlaces(true)}>
+                  🗺 <span className="hide-sm">Places</span>
+                </button>
+                <Link href={`/trees/${treeId}/print`}>
+                  <button className="ghost">🖨 <span className="hide-sm">Print</span></button>
+                </Link>
+              </>
             )}
             {canEdit && (
               <>
@@ -261,6 +268,16 @@ export default function TreePage() {
           onClose={() => setShowShare(false)}
         >
           <ShareLinksPanel treeId={treeId} people={people} />
+        </Modal>
+      )}
+
+      {showPlaces && tree && (
+        <Modal
+          title="Places & roots"
+          subtitle="Where your family has lived, married, and migrated."
+          onClose={() => setShowPlaces(false)}
+        >
+          <PlacesPanel treeId={treeId} />
         </Modal>
       )}
 
