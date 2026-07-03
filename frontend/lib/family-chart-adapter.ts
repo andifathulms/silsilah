@@ -41,14 +41,19 @@ function splitName(name: string): [string, string] {
   return [parts[0], parts.slice(1).join(" ")];
 }
 
-/** Human-friendly lifespan for a node label, e.g. "1940 – 2015", "b. 1965",
- * "1943 –". Avoids showing raw ISO dates like "1965-11-02" on the card. */
+/** Human-friendly lifespan for a node label. Deceased people get a dagger (†)
+ * and always show a line ("in memory" when no dates) so they read as departed
+ * even without a birth/death year. Avoids raw ISO dates on the card. */
 function lifespanLabel(p: Person): string | undefined {
   const b = p.birth_date ? p.birth_date.slice(0, 4) : "";
   const d = p.death_date ? p.death_date.slice(0, 4) : "";
-  if (b && d) return `${b} – ${d}`;
-  if (b) return p.is_living ? `b. ${b}` : `${b} –`;
-  if (d) return `d. ${d}`;
+  if (!p.is_living) {
+    if (b && d) return `† ${b} – ${d}`;
+    if (d) return `† d. ${d}`;
+    if (b) return `† b. ${b}`;
+    return "† in memory";
+  }
+  if (b) return `b. ${b}`;
   return undefined;
 }
 

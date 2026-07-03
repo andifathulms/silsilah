@@ -10,7 +10,7 @@ interface Props {
   person: Person;
   canEdit?: boolean;
   onRecenter?: (personId: number) => void;
-  onAddRelative?: (kind: "parent" | "child" | "spouse") => void;
+  onAddRelative?: (kind: "parent" | "child" | "spouse" | "sibling") => void;
 }
 
 function RelativeRow({ label, people }: { label: string; people: Person[] }) {
@@ -103,6 +103,7 @@ export default function PersonDetailPanel({
         <div className="quick-add">
           <span className="rel-label" style={{ alignSelf: "center" }}>Add</span>
           <button className="sm" onClick={() => onAddRelative("parent")}>+ Parent</button>
+          <button className="sm" onClick={() => onAddRelative("sibling")}>+ Sibling</button>
           <button className="sm" onClick={() => onAddRelative("spouse")}>+ Spouse</button>
           <button className="sm" onClick={() => onAddRelative("child")}>+ Child</button>
         </div>

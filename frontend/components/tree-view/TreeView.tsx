@@ -29,6 +29,7 @@ export default function TreeView({
 
   useEffect(() => {
     let cancelled = false;
+    let observer: MutationObserver | null = null;
 
     async function render() {
       const mod = await import("family-chart");
@@ -72,6 +73,24 @@ export default function TreeView({
       chartRef.current = chart;
       chart.updateTree({ initial: true });
 
+      // Mark deceased cards so they read as departed (grayscale + dagger).
+      // family-chart stamps each card div with data-id = our person id.
+      const deceased = new Set(
+        people.filter((p) => !p.is_living).map((p) => String(p.id))
+      );
+      const markDeceased = () => {
+        const cards = containerRef.current?.querySelectorAll<HTMLElement>(".card[data-id]");
+        cards?.forEach((el) => {
+          const id = (el.getAttribute("data-id") || "").split("--")[0];
+          el.classList.toggle("card-deceased", deceased.has(id));
+        });
+      };
+      markDeceased();
+      // Re-apply whenever the chart re-renders cards (pan/zoom/recenter).
+      observer?.disconnect();
+      observer = new MutationObserver(markDeceased);
+      observer.observe(containerRef.current, { childList: true, subtree: true });
+
       // silence unused var lint in strict builds
       void card;
     }
@@ -79,6 +98,7 @@ export default function TreeView({
     render();
     return () => {
       cancelled = true;
+      observer?.disconnect();
     };
   }, [people, relationships, mainId, onSelect]);
 
