@@ -184,6 +184,11 @@ export const api = {
       `/trees/${treeId}/people/${personId}/changelog/`
     ),
 
+  getRelationship: (treeId: number, personId: number, otherId: number) =>
+    request<{ label: string; sentence: string; other_name: string }>(
+      `/trees/${treeId}/people/${personId}/relationship-to/${otherId}/`
+    ),
+
   // --- Relationships ------------------------------------------------------
   listRelationships: (treeId: number) =>
     request<Paginated<Relationship> | Relationship[]>(

@@ -703,6 +703,22 @@ textarea { resize: vertical; }
 .diff-arrow { color: var(--gold-600); }
 .diff-new { color: var(--forest-700); font-weight: 600; }
 
+/* ---------- Relationship calculator ---------- */
+.rel-result {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.85rem;
+  padding: 0.85rem 1rem;
+  background: linear-gradient(135deg, var(--gold-100), var(--surface-2));
+  border: 1px solid #ecdca6;
+  border-radius: var(--r);
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  color: var(--ink);
+}
+.rel-result-icon { font-size: 1.3rem; }
+
 /* ---------- Person detail panel ---------- */
 .detail-card { position: relative; overflow: hidden; padding-top: 1.5rem; }
 .detail-banner {

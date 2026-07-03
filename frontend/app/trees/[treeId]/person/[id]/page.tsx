@@ -9,6 +9,7 @@ import type { ChangeLogEntry, Person, Relatives, Tree } from "@/lib/types";
 import TopBar from "@/components/TopBar";
 import PersonForm from "@/components/person-form/PersonForm";
 import MediaGallery from "@/components/media/MediaGallery";
+import RelationshipCalculator from "@/components/relationship-calculator/RelationshipCalculator";
 
 const FIELD_LABELS: Record<string, string> = {
   name: "Name",
@@ -210,6 +211,9 @@ export default function PersonDetailPage() {
             ) : (
               <p className="muted">Loading…</p>
             )}
+            <div className="divider" />
+            <h4 style={{ margin: "0 0 0.6rem" }}>🧮 Relationship calculator</h4>
+            <RelationshipCalculator treeId={treeId} person={person} />
           </div>
         </div>
 
