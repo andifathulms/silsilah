@@ -8,6 +8,7 @@ import { isAuthenticated } from "@/lib/auth";
 import type { Person, Relationship, Tree } from "@/lib/types";
 import TopBar from "@/components/TopBar";
 import TreeView from "@/components/tree-view/TreeView";
+import PeopleSearch from "@/components/tree-view/PeopleSearch";
 import PersonDetailPanel from "@/components/person-detail/PersonDetailPanel";
 import Modal from "@/components/Modal";
 import PersonForm from "@/components/person-form/PersonForm";
@@ -120,6 +121,17 @@ export default function TreePage() {
 
         <div className="tree-layout animate-in d2">
           <div className="tree-stage">
+            {people.length > 2 && (
+              <div className="tree-search-wrap">
+                <PeopleSearch
+                  people={people}
+                  onPick={(id) => {
+                    setMainId(id);
+                    setSelectedId(id);
+                  }}
+                />
+              </div>
+            )}
             <TreeView
               people={people}
               relationships={relationships}
