@@ -98,6 +98,11 @@ export default function TreePage() {
             </div>
           </div>
           <div className="tree-toolbar">
+            {people.length > 0 && (
+              <Link href={`/trees/${treeId}/print`}>
+                <button className="ghost">🖨 <span className="hide-sm">Print</span></button>
+              </Link>
+            )}
             {canEdit && (
               <>
                 <button className="primary" onClick={() => setShowAddPerson(true)}>

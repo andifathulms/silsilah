@@ -816,6 +816,43 @@ textarea { resize: vertical; }
   margin-top: 0.75rem;
 }
 
+/* ---------- Print / poster ---------- */
+.print-page { min-height: 100vh; background: var(--bg); }
+.print-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.8rem var(--gutter);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.print-sheet {
+  max-width: 1100px;
+  margin: 1.5rem auto;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow);
+  padding: 2rem;
+}
+.print-head { text-align: center; border-bottom: 2px solid var(--gold-400); padding-bottom: 1rem; margin-bottom: 1rem; }
+.print-canvas { height: 70vh; }
+.print-canvas .tree-stage,
+.print-canvas .f3 { border: none !important; box-shadow: none !important; background: transparent !important; }
+.print-foot { text-align: center; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff; }
+  .print-sheet { box-shadow: none; border: none; margin: 0; max-width: none; }
+  .print-canvas { height: 90vh; }
+  @page { size: landscape; margin: 1cm; }
+}
+
 /* ---------- On this day ---------- */
 .occasions { margin-bottom: 1.25rem; }
 .occasions-label {
