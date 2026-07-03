@@ -80,54 +80,36 @@ export default function MediaGallery({
       )}
 
       {items.length === 0 ? (
-        <p className="muted">No photos yet.</p>
+        <p className="muted" style={{ margin: redacted ? "0" : "0 0 0.5rem" }}>
+          No photos yet.{canEdit ? " Add one below to start the album." : ""}
+        </p>
       ) : (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))",
-            gap: "0.6rem",
-          }}
-        >
+        <div className="media-grid">
           {items.map((m) => (
-            <figure key={m.id} style={{ margin: 0 }}>
+            <figure key={m.id} className="media-tile">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={mediaUrl(m.image) ?? ""}
-                alt={m.caption || "photo"}
-                style={{
-                  width: "100%",
-                  height: 110,
-                  objectFit: "cover",
-                  borderRadius: 8,
-                  border: "1px solid var(--border)",
-                }}
-              />
-              <figcaption className="muted" style={{ fontSize: "0.72rem" }}>
-                {m.caption}
-                {m.event_date ? ` · ${m.event_date}` : ""}
-                {canEdit && (
-                  <>
-                    {" "}
-                    <button
-                      onClick={() => remove(m.id)}
-                      style={{ padding: "0 0.3rem", fontSize: "0.7rem" }}
-                    >
-                      ✕
-                    </button>
-                  </>
-                )}
-              </figcaption>
+              <img src={mediaUrl(m.image) ?? ""} alt={m.caption || "photo"} />
+              {canEdit && (
+                <button className="media-del" onClick={() => remove(m.id)} title="Delete">
+                  ✕
+                </button>
+              )}
+              {(m.caption || m.event_date) && (
+                <figcaption className="media-cap">
+                  {m.caption}
+                  {m.event_date ? ` · ${m.event_date}` : ""}
+                </figcaption>
+              )}
             </figure>
           ))}
         </div>
       )}
 
       {canEdit && (
-        <form onSubmit={upload} style={{ marginTop: "0.8rem" }}>
+        <form onSubmit={upload} className="upload-box">
           <label>Add a photo (optional caption + life-event date)</label>
           <input ref={fileRef} type="file" accept="image/*" />
-          <div className="row" style={{ marginTop: "0.4rem" }}>
+          <div className="row wrap" style={{ marginTop: "0.5rem" }}>
             <input
               placeholder="Caption, e.g. Wedding 1962"
               value={caption}

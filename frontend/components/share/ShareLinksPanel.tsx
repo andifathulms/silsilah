@@ -85,10 +85,12 @@ export default function ShareLinksPanel({ treeId, people }: Props) {
       ) : (
         <div style={{ marginBottom: "1rem" }}>
           {links.map((l) => (
-            <div key={l.id} style={{ padding: "0.4rem 0", borderBottom: "1px solid var(--border)" }}>
-              <div className="row" style={{ justifyContent: "space-between" }}>
-                <span>
-                  <span className="badge">{l.scope === "branch" ? "branch" : "whole tree"}</span>{" "}
+            <div key={l.id} className="share-link-row">
+              <div className="row spread wrap" style={{ gap: "0.5rem" }}>
+                <span className="row" style={{ gap: "0.4rem" }}>
+                  <span className={`badge ${l.scope === "branch" ? "" : "forest"}`}>
+                    {l.scope === "branch" ? "🌿 branch" : "🌳 whole tree"}
+                  </span>
                   {l.root_person_name && (
                     <span className="muted" style={{ fontSize: "0.85rem" }}>
                       {l.root_person_name}
@@ -96,18 +98,16 @@ export default function ShareLinksPanel({ treeId, people }: Props) {
                     </span>
                   )}
                 </span>
-                <span className="row">
-                  <button onClick={() => copy(l)}>
-                    {copied === l.id ? "Copied!" : "Copy link"}
+                <span className="row" style={{ gap: "0.4rem" }}>
+                  <button className="sm" onClick={() => copy(l)}>
+                    {copied === l.id ? "✓ Copied" : "Copy link"}
                   </button>
-                  <button className="danger" onClick={() => remove(l.id)}>
+                  <button className="danger sm" onClick={() => remove(l.id)}>
                     Revoke
                   </button>
                 </span>
               </div>
-              <code style={{ fontSize: "0.72rem", color: "var(--muted)", wordBreak: "break-all" }}>
-                {publicUrl(l.token)}
-              </code>
+              <code className="share-link-url">{publicUrl(l.token)}</code>
             </div>
           ))}
         </div>
@@ -138,12 +138,11 @@ export default function ShareLinksPanel({ treeId, people }: Props) {
               </select>
             </div>
             <div className="field">
-              <label>
+              <label className="check">
                 <input
                   type="checkbox"
                   checked={includeAncestors}
                   onChange={(e) => setIncludeAncestors(e.target.checked)}
-                  style={{ width: "auto", marginRight: 6 }}
                 />
                 Also include ancestors
               </label>

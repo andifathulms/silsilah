@@ -40,87 +40,97 @@ export default function PublicSharePage() {
 
   return (
     <>
-      <div className="topbar">
-        <span className="brand">🌳 {share.tree.name}</span>
-        <span className="badge">
-          read-only{share.scope === "branch" ? " · branch" : ""}
+      <header className="topbar">
+        <span className="brand">
+          <span className="brand-mark">🌳</span> {share.tree.name}
         </span>
-      </div>
-      <div className="container" style={{ maxWidth: 1200 }}>
-        <p className="muted" style={{ fontSize: "0.85rem" }}>
-          Shared family tree. Details of living people are hidden for privacy.
-        </p>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 300px",
-            gap: "1rem",
-            alignItems: "start",
-          }}
-        >
-          <div style={{ height: "72vh" }}>
+        <div className="row">
+          <span className="badge">
+            👁 Read-only{share.scope === "branch" ? " · branch" : ""}
+          </span>
+          <a href="/login">
+            <button className="primary sm">Build your own →</button>
+          </a>
+        </div>
+      </header>
+      <div className="container tree-container">
+        <div className="share-hero animate-in">
+          <div className="eyebrow">A shared family tree</div>
+          <h1 style={{ margin: "0.2rem 0 0.3rem" }}>{share.tree.name}</h1>
+          <p className="muted" style={{ margin: 0 }}>
+            Explore the family below. Details of living relatives are kept private.
+          </p>
+        </div>
+
+        <div className="tree-layout animate-in d1">
+          <div className="tree-stage">
             <TreeView
               people={share.people}
               relationships={share.relationships}
               mainId={share.root_person}
               onSelect={setSelectedId}
             />
+            {share.people.length > 0 && (
+              <div className="tree-hint">Click a person · drag to pan · scroll to zoom</div>
+            )}
           </div>
-          <div>
+          <aside className="detail-col">
             {selected ? (
               <ReadOnlyDetail person={selected} />
             ) : (
-              <div className="card muted">Select a person.</div>
+              <div className="card detail-empty">
+                <div className="empty-mark" style={{ fontSize: "2rem" }}>👆</div>
+                <p className="muted" style={{ margin: 0 }}>Select a person to see details.</p>
+              </div>
             )}
-          </div>
+          </aside>
         </div>
+
+        <footer className="share-foot muted">
+          Made with <strong style={{ color: "var(--forest-600)" }}>🌳 Silsilah</strong> — start your family's tree free.
+        </footer>
       </div>
     </>
   );
 }
 
 function ReadOnlyDetail({ person }: { person: PublicPerson }) {
+  const initial = person.name.charAt(0).toUpperCase();
   return (
-    <div className="card" style={{ position: "sticky", top: "1rem" }}>
-      <h3 style={{ marginTop: 0 }}>{person.name}</h3>
-      <div className="muted" style={{ fontSize: "0.85rem" }}>
-        {person.gender && <span>{person.gender} · </span>}
-        {person.is_living ? "living" : "deceased"}
-        {person.birth_date ? ` · b. ${person.birth_date}` : ""}
-        {person.death_date ? ` · d. ${person.death_date}` : ""}
+    <div className="card detail-card">
+      <div className={`detail-banner ${person.is_living ? "living" : "deceased"}`} />
+      <div className="detail-head">
+        <div className="avatar detail-avatar">{initial}</div>
+        <div style={{ minWidth: 0 }}>
+          <h3 className="detail-name">{person.name}</h3>
+          <div className="detail-sub">
+            {person.gender && <span>{titleCase(person.gender)} · </span>}
+            {person.is_living ? "Living" : "In memory"}
+            {person.birth_date ? ` · b. ${person.birth_date}` : ""}
+            {person.death_date ? ` · d. ${person.death_date}` : ""}
+          </div>
+        </div>
       </div>
       {person._private_redacted && (
-        <p className="muted" style={{ fontSize: "0.8rem" }}>
-          🔒 Details hidden (living person).
+        <p className="muted" style={{ fontSize: "0.82rem", marginTop: 0 }}>
+          🔒 Details hidden for this living relative.
         </p>
       )}
       {person.notes && <p style={{ whiteSpace: "pre-wrap" }}>{person.notes}</p>}
       {person.media.length > 0 && (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(80px, 1fr))",
-            gap: "0.4rem",
-            marginTop: "0.6rem",
-          }}
-        >
+        <div className="media-grid" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(80px, 1fr))" }}>
           {person.media.map((m) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              key={m.id}
-              src={mediaUrl(m.image) ?? ""}
-              alt={m.caption || "photo"}
-              title={m.caption}
-              style={{
-                width: "100%",
-                height: 70,
-                objectFit: "cover",
-                borderRadius: 6,
-              }}
-            />
+            <figure key={m.id} className="media-tile">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={mediaUrl(m.image) ?? ""} alt={m.caption || "photo"} title={m.caption} style={{ height: 78 }} />
+            </figure>
           ))}
         </div>
       )}
     </div>
   );
+}
+
+function titleCase(s: string) {
+  return s.charAt(0).toUpperCase() + s.slice(1);
 }
