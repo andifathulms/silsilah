@@ -1,5 +1,11 @@
+import uuid
+
 from django.contrib.auth.models import User
 from django.db import models
+
+
+def _invite_token():
+    return uuid.uuid4().hex
 
 
 class Tree(models.Model):
@@ -41,3 +47,44 @@ class TreeMembership(models.Model):
 
     def __str__(self):
         return f"{self.user} — {self.role} of {self.tree}"
+
+
+class Invitation(models.Model):
+    """A shareable invite link that grants a role on acceptance.
+
+    Unlike the direct email invite (which requires the person to already have
+    an account), an Invitation is a token anyone can open, sign up through, and
+    accept — removing the onboarding wall.
+    """
+
+    tree = models.ForeignKey(
+        Tree, on_delete=models.CASCADE, related_name="invitations"
+    )
+    email = models.EmailField(blank=True)  # optional target hint
+    role = models.CharField(
+        max_length=10,
+        choices=[
+            (TreeMembership.ROLE_EDITOR, "Editor"),
+            (TreeMembership.ROLE_VIEWER, "Viewer"),
+        ],
+    )
+    token = models.CharField(max_length=32, unique=True, default=_invite_token)
+    invited_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, related_name="sent_invitations"
+    )
+    accepted_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="accepted_invitations",
+    )
+    accepted_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Invite to {self.tree} as {self.role}"
+
+    @property
+    def is_accepted(self):
+        return self.accepted_by_id is not None

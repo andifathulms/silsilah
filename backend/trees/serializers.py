@@ -1,7 +1,30 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from .models import Tree, TreeMembership
+from .models import Invitation, Tree, TreeMembership
+
+
+class InvitationSerializer(serializers.ModelSerializer):
+    invited_by_username = serializers.CharField(
+        source="invited_by.username", read_only=True, default=None
+    )
+    tree_name = serializers.CharField(source="tree.name", read_only=True)
+
+    class Meta:
+        model = Invitation
+        fields = [
+            "id",
+            "tree",
+            "tree_name",
+            "email",
+            "role",
+            "token",
+            "invited_by_username",
+            "accepted_by",
+            "accepted_at",
+            "created_at",
+        ]
+        read_only_fields = ["id", "tree", "token", "accepted_by", "accepted_at", "created_at"]
 
 
 class TreeMembershipSerializer(serializers.ModelSerializer):

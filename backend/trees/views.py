@@ -1,13 +1,17 @@
 from django.db import transaction
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from .models import Tree, TreeMembership
+from .models import Invitation, Tree, TreeMembership
 from .permissions import IsTreeOwner
 from .serializers import (
+    InvitationSerializer,
     InviteSerializer,
     TreeMembershipSerializer,
     TreeSerializer,
@@ -85,3 +89,61 @@ class TreeViewSet(viewsets.ModelViewSet):
         membership.role = new_role
         membership.save(update_fields=["role"])
         return Response(TreeMembershipSerializer(membership).data)
+
+
+class InvitationViewSet(viewsets.ModelViewSet):
+    """Owner-managed shareable invite links for a tree."""
+
+    serializer_class = InvitationSerializer
+    permission_classes = [IsAuthenticated, IsTreeOwner]
+
+    def get_tree(self):
+        return get_object_or_404(Tree, pk=self.kwargs["tree_id"])
+
+    def get_queryset(self):
+        return Invitation.objects.filter(tree_id=self.kwargs["tree_id"])
+
+    def perform_create(self, serializer):
+        serializer.save(tree=self.get_tree(), invited_by=self.request.user)
+
+
+class InvitationPreviewView(APIView):
+    """Public preview of an invite link (tree name, role, inviter)."""
+
+    permission_classes = [AllowAny]
+
+    def get(self, request, token=None):
+        invite = get_object_or_404(Invitation, token=token)
+        return Response(
+            {
+                "tree": {"id": invite.tree_id, "name": invite.tree.name},
+                "role": invite.role,
+                "invited_by": invite.invited_by.username if invite.invited_by else None,
+                "already_accepted": invite.is_accepted,
+                "already_member": bool(invite.tree.role_for(request.user)),
+            }
+        )
+
+
+class InvitationAcceptView(APIView):
+    """Accept an invite (auth required). Creates/updates the membership."""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, token=None):
+        invite = get_object_or_404(Invitation, token=token)
+        existing_role = invite.tree.role_for(request.user)
+        if existing_role == TreeMembership.ROLE_OWNER:
+            return Response(
+                {"detail": "You already own this tree.", "tree": invite.tree_id}
+            )
+        membership, _ = TreeMembership.objects.update_or_create(
+            tree=invite.tree,
+            user=request.user,
+            defaults={"role": invite.role} if existing_role != TreeMembership.ROLE_OWNER else {},
+        )
+        if not invite.is_accepted:
+            invite.accepted_by = request.user
+            invite.accepted_at = timezone.now()
+            invite.save(update_fields=["accepted_by", "accepted_at"])
+        return Response({"tree": invite.tree_id, "role": membership.role})
