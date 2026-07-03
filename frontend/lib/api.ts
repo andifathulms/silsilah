@@ -5,6 +5,7 @@ import type {
   ChangeLogEntry,
   Invitation,
   InvitePreview,
+  LifeEvent,
   MediaItem,
   Membership,
   Person,
@@ -231,6 +232,23 @@ export const api = {
 
   deleteMedia: (treeId: number, personId: number, mediaId: number) =>
     request<void>(`/trees/${treeId}/people/${personId}/media/${mediaId}/`, {
+      method: "DELETE",
+    }),
+
+  // --- Life events (timeline) ---------------------------------------------
+  listEvents: (treeId: number, personId: number) =>
+    request<Paginated<LifeEvent> | LifeEvent[]>(
+      `/trees/${treeId}/people/${personId}/events/`
+    ).then(unwrap),
+
+  createEvent: (treeId: number, personId: number, body: Partial<LifeEvent>) =>
+    request<LifeEvent>(`/trees/${treeId}/people/${personId}/events/`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  deleteEvent: (treeId: number, personId: number, eventId: number) =>
+    request<void>(`/trees/${treeId}/people/${personId}/events/${eventId}/`, {
       method: "DELETE",
     }),
 

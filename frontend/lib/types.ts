@@ -102,6 +102,30 @@ export interface MediaItem {
   created_at: string;
 }
 
+export type LifeEventType =
+  | "birth"
+  | "marriage"
+  | "death"
+  | "education"
+  | "career"
+  | "residence"
+  | "immigration"
+  | "military"
+  | "religious"
+  | "other";
+
+export interface LifeEvent {
+  id: number;
+  person: number;
+  type: LifeEventType;
+  type_display: string;
+  title: string;
+  date: string | null;
+  place: string;
+  description: string;
+  created_at: string;
+}
+
 export interface ShareLink {
   id: number;
   token: string;

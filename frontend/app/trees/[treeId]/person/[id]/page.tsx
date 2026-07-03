@@ -10,6 +10,7 @@ import TopBar from "@/components/TopBar";
 import PersonForm from "@/components/person-form/PersonForm";
 import MediaGallery from "@/components/media/MediaGallery";
 import RelationshipCalculator from "@/components/relationship-calculator/RelationshipCalculator";
+import LifeTimeline from "@/components/timeline/LifeTimeline";
 
 const FIELD_LABELS: Record<string, string> = {
   name: "Name",
@@ -215,6 +216,16 @@ export default function PersonDetailPage() {
             <h4 style={{ margin: "0 0 0.6rem" }}>🧮 Relationship calculator</h4>
             <RelationshipCalculator treeId={treeId} person={person} />
           </div>
+        </div>
+
+        <div className="card animate-in d3" style={{ marginTop: "1.25rem" }}>
+          <h3 style={{ marginTop: 0 }}>🕰 Life timeline</h3>
+          <LifeTimeline
+            treeId={treeId}
+            person={person}
+            canEdit={canEdit}
+            redacted={person._private_redacted}
+          />
         </div>
 
         <div className="card animate-in d3" style={{ marginTop: "1.25rem" }}>

@@ -703,6 +703,37 @@ textarea { resize: vertical; }
 .diff-arrow { color: var(--gold-600); }
 .diff-new { color: var(--forest-700); font-weight: 600; }
 
+/* ---------- Life timeline ---------- */
+.lifeline { position: relative; display: grid; gap: 0.25rem; }
+.lifeline::before {
+  content: "";
+  position: absolute;
+  left: 17px;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  background: linear-gradient(var(--gold-400), var(--border));
+}
+.lifeline-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 36px 1fr auto;
+  gap: 0.6rem;
+  align-items: start;
+  padding: 0.5rem 0;
+}
+.lifeline-icon {
+  width: 36px; height: 36px;
+  display: grid; place-items: center;
+  border-radius: var(--r-full);
+  background: var(--surface);
+  border: 2px solid var(--gold-100);
+  box-shadow: var(--shadow-sm);
+  font-size: 1rem;
+  z-index: 1;
+}
+.lifeline-body { padding-top: 0.15rem; }
+
 /* ---------- Relationship calculator ---------- */
 .rel-result {
   display: flex;
