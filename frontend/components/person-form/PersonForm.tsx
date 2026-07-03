@@ -80,13 +80,12 @@ export default function PersonForm({
             <option value="other">Other</option>
           </select>
         </div>
-        <div className="field" style={{ flex: 1 }}>
-          <label>
+        <div className="field" style={{ flex: 1, display: "flex", alignItems: "flex-end" }}>
+          <label className="check">
             <input
               type="checkbox"
               checked={values.is_living}
               onChange={(e) => set("is_living", e.target.checked)}
-              style={{ width: "auto", marginRight: 6 }}
             />
             Living
           </label>

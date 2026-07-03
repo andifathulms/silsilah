@@ -114,12 +114,11 @@ export default function RelationshipForm({
 
       {type === "parent_child" && (
         <div className="field">
-          <label>
+          <label className="check">
             <input
               type="checkbox"
               checked={isBiological}
               onChange={(e) => setIsBiological(e.target.checked)}
-              style={{ width: "auto", marginRight: 6 }}
             />
             Biological (uncheck for adopted)
           </label>

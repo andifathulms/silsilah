@@ -3,29 +3,50 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { api } from "@/lib/api";
+import { api, mediaUrl } from "@/lib/api";
 import { isAuthenticated } from "@/lib/auth";
 import type { ChangeLogEntry, Person, Relatives, Tree } from "@/lib/types";
 import TopBar from "@/components/TopBar";
 import PersonForm from "@/components/person-form/PersonForm";
 import MediaGallery from "@/components/media/MediaGallery";
 
+const FIELD_LABELS: Record<string, string> = {
+  name: "Name",
+  gender: "Gender",
+  birth_date: "Birth date",
+  death_date: "Death date",
+  is_living: "Living",
+  notes: "Notes",
+  is_archived: "Archived",
+  photo: "Photo",
+};
+
 function ChangeLog({ entries }: { entries: ChangeLogEntry[] }) {
-  if (!entries.length) return <p className="muted">No changes recorded yet.</p>;
+  if (!entries.length)
+    return <p className="muted" style={{ margin: 0 }}>No changes recorded yet.</p>;
   return (
-    <div>
+    <div className="timeline">
       {entries.map((e) => (
-        <div key={e.id} style={{ padding: "0.5rem 0", borderBottom: "1px solid var(--border)" }}>
-          <div className="muted" style={{ fontSize: "0.8rem" }}>
-            {e.changed_by_username ?? "someone"} · {new Date(e.changed_at).toLocaleString()}
+        <div key={e.id} className="timeline-item">
+          <div className="timeline-dot" />
+          <div>
+            <div className="muted" style={{ fontSize: "0.8rem" }}>
+              <strong style={{ color: "var(--ink-soft)" }}>
+                {e.changed_by_username ?? "Someone"}
+              </strong>{" "}
+              · {new Date(e.changed_at).toLocaleString()}
+            </div>
+            <ul className="diff-list">
+              {Object.entries(e.diff).map(([field, [oldV, newV]]) => (
+                <li key={field}>
+                  <span className="diff-field">{FIELD_LABELS[field] ?? field}</span>
+                  <span className="diff-old">{String(oldV ?? "—")}</span>
+                  <span className="diff-arrow">→</span>
+                  <span className="diff-new">{String(newV ?? "—")}</span>
+                </li>
+              ))}
+            </ul>
           </div>
-          <ul style={{ margin: "0.3rem 0", paddingLeft: "1.2rem" }}>
-            {Object.entries(e.diff).map(([field, [oldV, newV]]) => (
-              <li key={field}>
-                <strong>{field}</strong>: {String(oldV ?? "—")} → {String(newV ?? "—")}
-              </li>
-            ))}
-          </ul>
         </div>
       ))}
     </div>
@@ -79,66 +100,103 @@ export default function PersonDetailPage() {
     router.push(`/trees/${treeId}`);
   }
 
-  if (error) return <div className="container error">{error}</div>;
-  if (!person) return <div className="container muted">Loading…</div>;
+  if (error) return <div className="container"><div className="error">{error}</div></div>;
+  if (!person)
+    return (
+      <>
+        <TopBar />
+        <div className="container muted">Loading…</div>
+      </>
+    );
+
+  const initial = person.name.charAt(0).toUpperCase();
+  const photo = mediaUrl(person.photo);
+  const lifespan = [person.birth_date?.slice(0, 4), person.death_date?.slice(0, 4)];
 
   return (
     <>
       <TopBar />
       <div className="container">
-        <Link href={`/trees/${treeId}`}>← Back to tree</Link>
+        <nav className="crumbs animate-in">
+          <Link href="/">My trees</Link>
+          <span className="muted">/</span>
+          <Link href={`/trees/${treeId}`}>{tree?.name ?? "Tree"}</Link>
+          <span className="muted">/</span>
+          <span className="muted">{person.name}</span>
+        </nav>
 
-        <div className="row" style={{ justifyContent: "space-between", marginTop: "0.5rem" }}>
-          <h1 style={{ margin: 0 }}>{person.name}</h1>
-          {canEdit && !editing && (
-            <div className="row">
-              <button onClick={() => setEditing(true)}>Edit</button>
-              <button className="danger" onClick={archive}>
-                Archive
-              </button>
+        {/* Profile hero */}
+        <div className="profile-hero animate-in d1">
+          <div className={`profile-hero-bg ${person.is_living ? "" : "deceased"}`} />
+          <div className="profile-hero-content">
+            <div className="avatar profile-avatar">
+              {photo ? <img src={photo} alt={person.name} /> : initial}
             </div>
-          )}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h1 style={{ margin: 0, color: "#fff" }}>{person.name}</h1>
+              <div className="row wrap" style={{ gap: "0.4rem", marginTop: "0.5rem" }}>
+                <span className="badge" style={{ background: "rgba(255,255,255,0.16)", color: "#fff", border: "1px solid rgba(255,255,255,0.2)" }}>
+                  {person.is_living ? "● Living" : "In memory"}
+                </span>
+                {person.gender && (
+                  <span className="badge" style={{ background: "rgba(255,255,255,0.16)", color: "#fff", border: "1px solid rgba(255,255,255,0.2)" }}>
+                    {titleCase(person.gender)}
+                  </span>
+                )}
+                {(lifespan[0] || lifespan[1]) && (
+                  <span className="badge" style={{ background: "rgba(255,255,255,0.16)", color: "#fff", border: "1px solid rgba(255,255,255,0.2)" }}>
+                    {lifespan[0] ?? "?"}{person.death_date ? `–${lifespan[1]}` : ""}
+                  </span>
+                )}
+              </div>
+            </div>
+            {canEdit && !editing && (
+              <div className="row profile-actions">
+                <button onClick={() => setEditing(true)}>✎ Edit</button>
+                <button className="danger" onClick={archive}>Archive</button>
+              </div>
+            )}
+          </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginTop: "1rem" }}>
+        <div className="profile-grid animate-in d2">
           <div className="card">
             {editing ? (
-              <PersonForm
-                initial={person}
-                submitLabel="Save changes"
-                onCancel={() => setEditing(false)}
-                onSubmit={async (values) => {
-                  await api.updatePerson(treeId, personId, {
-                    ...values,
-                    birth_date: values.birth_date || null,
-                    death_date: values.death_date || null,
-                  });
-                  setEditing(false);
-                  await load();
-                }}
-              />
+              <>
+                <h3 style={{ marginTop: 0 }}>Edit details</h3>
+                <PersonForm
+                  initial={person}
+                  submitLabel="Save changes"
+                  onCancel={() => setEditing(false)}
+                  onSubmit={async (values) => {
+                    await api.updatePerson(treeId, personId, {
+                      ...values,
+                      birth_date: values.birth_date || null,
+                      death_date: values.death_date || null,
+                    });
+                    setEditing(false);
+                    await load();
+                  }}
+                />
+              </>
             ) : (
               <>
                 <h3 style={{ marginTop: 0 }}>Details</h3>
                 {person._private_redacted && (
-                  <div className="muted" style={{ fontSize: "0.85rem", marginBottom: "0.5rem" }}>
+                  <p className="muted" style={{ fontSize: "0.85rem", marginTop: 0 }}>
                     🔒 Some fields are hidden for living people at your access level.
-                  </div>
+                  </p>
                 )}
-                <p>
-                  <span className="muted">Gender:</span> {person.gender || "—"}
-                  <br />
-                  <span className="muted">Born:</span> {person.birth_date || "—"}
-                  <br />
-                  <span className="muted">Died:</span> {person.death_date || "—"}
-                  <br />
-                  <span className="muted">Status:</span>{" "}
-                  {person.is_living ? "Living" : "Deceased"}
-                </p>
+                <dl className="detail-dl">
+                  <dt>Gender</dt><dd>{person.gender ? titleCase(person.gender) : "—"}</dd>
+                  <dt>Born</dt><dd>{person.birth_date || "—"}</dd>
+                  <dt>Died</dt><dd>{person.death_date || "—"}</dd>
+                  <dt>Status</dt><dd>{person.is_living ? "Living" : "Deceased"}</dd>
+                </dl>
                 {person.notes && (
                   <>
-                    <h4>Notes</h4>
-                    <p style={{ whiteSpace: "pre-wrap" }}>{person.notes}</p>
+                    <h4 style={{ marginBottom: "0.4rem" }}>Notes</h4>
+                    <p style={{ whiteSpace: "pre-wrap", margin: 0 }}>{person.notes}</p>
                   </>
                 )}
               </>
@@ -155,8 +213,8 @@ export default function PersonDetailPage() {
           </div>
         </div>
 
-        <div className="card" style={{ marginTop: "1rem" }}>
-          <h3 style={{ marginTop: 0 }}>Photos</h3>
+        <div className="card animate-in d3" style={{ marginTop: "1.25rem" }}>
+          <h3 style={{ marginTop: 0 }}>📷 Photos & memories</h3>
           <MediaGallery
             treeId={treeId}
             personId={personId}
@@ -166,14 +224,18 @@ export default function PersonDetailPage() {
         </div>
 
         {canEdit && (
-          <div className="card" style={{ marginTop: "1rem" }}>
-            <h3 style={{ marginTop: 0 }}>Change history</h3>
+          <div className="card animate-in d4" style={{ marginTop: "1.25rem" }}>
+            <h3 style={{ marginTop: 0 }}>🕓 Change history</h3>
             {changelog ? <ChangeLog entries={changelog} /> : <p className="muted">Loading…</p>}
           </div>
         )}
       </div>
     </>
   );
+}
+
+function titleCase(s: string) {
+  return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 function RelativeLinks({ treeId, relatives }: { treeId: number; relatives: Relatives }) {
@@ -186,27 +248,25 @@ function RelativeLinks({ treeId, relatives }: { treeId: number; relatives: Relat
     ["Grandparents", relatives.grandparents],
   ];
   const anyRelatives = groups.some(([, list]) => list.length > 0);
-  if (!anyRelatives) return <p className="muted">No relationships recorded yet.</p>;
+  if (!anyRelatives)
+    return <p className="muted" style={{ margin: 0 }}>No relationships recorded yet.</p>;
   return (
-    <>
+    <div className="rel-list" style={{ borderTop: "none", paddingTop: 0 }}>
       {groups.map(([label, list]) =>
         list.length ? (
-          <div key={label} style={{ marginBottom: "0.6rem" }}>
-            <div className="muted" style={{ fontSize: "0.75rem", textTransform: "uppercase" }}>
-              {label}
-            </div>
-            {list.map((p) => (
-              <Link
-                key={p.id}
-                href={`/trees/${treeId}/person/${p.id}`}
-                style={{ marginRight: "0.6rem" }}
-              >
-                {p.name}
-              </Link>
-            ))}
+          <div key={label} className="rel-row">
+            <span className="rel-label">{label}</span>
+            <span className="rel-people">
+              {list.map((p, i) => (
+                <span key={p.id}>
+                  <Link href={`/trees/${treeId}/person/${p.id}`}>{p.name}</Link>
+                  {i < list.length - 1 ? ", " : ""}
+                </span>
+              ))}
+            </span>
           </div>
         ) : null
       )}
-    </>
+    </div>
   );
 }

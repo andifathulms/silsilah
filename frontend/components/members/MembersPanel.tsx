@@ -41,23 +41,24 @@ export default function MembersPanel({ treeId }: { treeId: number }) {
 
   return (
     <div>
-      <div style={{ marginBottom: "1rem" }}>
+      <div className="member-list">
         {members.map((m) => (
-          <div
-            key={m.id}
-            className="row"
-            style={{ justifyContent: "space-between", padding: "0.3rem 0" }}
-          >
-            <span>
-              {m.username}{" "}
-              <span className="muted" style={{ fontSize: "0.8rem" }}>
+          <div key={m.id} className="member-row">
+            <div className="avatar" style={{ width: 36, height: 36, fontSize: "0.85rem" }}>
+              {(m.username || "?").charAt(0).toUpperCase()}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 600 }}>{m.username}</div>
+              <div className="muted" style={{ fontSize: "0.8rem", overflow: "hidden", textOverflow: "ellipsis" }}>
                 {m.email}
-              </span>
-            </span>
-            <span className={`badge ${m.role === "owner" ? "owner" : ""}`}>{m.role}</span>
+              </div>
+            </div>
+            <span className={`badge ${m.role === "owner" ? "owner" : "forest"}`}>{m.role}</span>
           </div>
         ))}
       </div>
+
+      <div className="divider" />
 
       <form onSubmit={invite}>
         <label>Invite by email (they must have an account)</label>

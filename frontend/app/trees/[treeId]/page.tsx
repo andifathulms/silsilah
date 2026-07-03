@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { isAuthenticated } from "@/lib/auth";
@@ -67,60 +68,69 @@ export default function TreePage() {
     router.push("/");
   }
 
+  const roleBadge =
+    tree?.my_role === "owner" ? "owner" : "forest";
+
   return (
     <>
       <TopBar />
-      <div className="container" style={{ maxWidth: 1200 }}>
+      <div className="container tree-container">
         {error && <div className="error">{error}</div>}
 
-        <div className="row" style={{ justifyContent: "space-between", flexWrap: "wrap" }}>
+        <nav className="crumbs animate-in">
+          <Link href="/">My trees</Link>
+          <span className="muted">/</span>
+          <span className="muted">{tree?.name ?? "…"}</span>
+        </nav>
+
+        <header className="tree-header animate-in d1">
           <div>
-            <h1 style={{ marginBottom: 0 }}>{tree?.name ?? "…"}</h1>
-            <span className="muted">
-              {people.length} people · your role: {tree?.my_role}
-            </span>
+            <h1 style={{ marginBottom: "0.35rem" }}>{tree?.name ?? "Loading…"}</h1>
+            <div className="row wrap" style={{ gap: "0.5rem" }}>
+              <span className="badge forest">👥 {people.length} people</span>
+              {tree && <span className={`badge ${roleBadge}`}>{tree.my_role}</span>}
+            </div>
           </div>
-          <div className="row" style={{ flexWrap: "wrap" }}>
+          <div className="tree-toolbar">
             {canEdit && (
               <>
                 <button className="primary" onClick={() => setShowAddPerson(true)}>
-                  + Person
+                  <span>＋</span> Add person
                 </button>
                 <button onClick={() => setShowAddRel(true)} disabled={people.length < 2}>
-                  + Relationship
+                  🔗 <span className="hide-sm">Connect</span>
                 </button>
               </>
             )}
             {isOwner && (
-              <>
-                <button onClick={() => setShowMembers(true)}>Members</button>
-                <button onClick={() => setShowShare(true)}>Share</button>
-                <button className="danger" onClick={handleDeleteTree}>
-                  Delete
+              <div className="row" style={{ gap: "0.5rem" }}>
+                <button className="ghost" onClick={() => setShowMembers(true)}>
+                  👥 <span className="hide-sm">Members</span>
                 </button>
-              </>
+                <button className="ghost" onClick={() => setShowShare(true)}>
+                  🔗 <span className="hide-sm">Share</span>
+                </button>
+                <button className="icon-btn danger" onClick={handleDeleteTree} title="Delete tree">
+                  🗑
+                </button>
+              </div>
             )}
           </div>
-        </div>
+        </header>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 320px",
-            gap: "1rem",
-            marginTop: "1rem",
-            alignItems: "start",
-          }}
-        >
-          <div style={{ height: "72vh" }}>
+        <div className="tree-layout animate-in d2">
+          <div className="tree-stage">
             <TreeView
               people={people}
               relationships={relationships}
               mainId={mainId}
               onSelect={setSelectedId}
             />
+            {people.length > 0 && (
+              <div className="tree-hint">Click a person to focus · drag to pan · scroll to zoom</div>
+            )}
           </div>
-          <div>
+          <aside className="detail-col">
             {selected ? (
               <PersonDetailPanel
                 treeId={treeId}
@@ -131,14 +141,25 @@ export default function TreePage() {
                 }}
               />
             ) : (
-              <div className="card muted">Select a person to see details.</div>
+              <div className="card detail-empty">
+                <div className="empty-mark" style={{ fontSize: "2.2rem" }}>👆</div>
+                <p className="muted" style={{ margin: 0 }}>
+                  {people.length
+                    ? "Select a person on the tree to see their details and relatives."
+                    : "Add your first person to begin building this tree."}
+                </p>
+              </div>
             )}
-          </div>
+          </aside>
         </div>
       </div>
 
       {showAddPerson && (
-        <Modal title="Add person" onClose={() => setShowAddPerson(false)}>
+        <Modal
+          title="Add a person"
+          subtitle="Only a name is required — connect them to others anytime."
+          onClose={() => setShowAddPerson(false)}
+        >
           <PersonForm
             submitLabel="Add person"
             onCancel={() => setShowAddPerson(false)}
@@ -157,7 +178,11 @@ export default function TreePage() {
       )}
 
       {showAddRel && (
-        <Modal title="Add relationship" onClose={() => setShowAddRel(false)}>
+        <Modal
+          title="Connect two people"
+          subtitle="Parent → child, or spouse. Direction matters for parent-child."
+          onClose={() => setShowAddRel(false)}
+        >
           <RelationshipForm
             people={people}
             anchorId={selectedId ?? undefined}
@@ -172,13 +197,21 @@ export default function TreePage() {
       )}
 
       {showMembers && tree && (
-        <Modal title="Members & invites" onClose={() => setShowMembers(false)}>
+        <Modal
+          title="Members & invites"
+          subtitle="Invite relatives as editors or viewers."
+          onClose={() => setShowMembers(false)}
+        >
           <MembersPanel treeId={treeId} />
         </Modal>
       )}
 
       {showShare && tree && (
-        <Modal title="Public share links" onClose={() => setShowShare(false)}>
+        <Modal
+          title="Share this tree"
+          subtitle="Create read-only links — for the whole tree or one branch."
+          onClose={() => setShowShare(false)}
+        >
           <ShareLinksPanel treeId={treeId} people={people} />
         </Modal>
       )}
