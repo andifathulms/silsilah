@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from .models import (
+    Comment,
     LifeEvent,
     MediaItem,
     Person,
@@ -32,6 +33,12 @@ class PersonChangeLogAdmin(admin.ModelAdmin):
 @admin.register(MediaItem)
 class MediaItemAdmin(admin.ModelAdmin):
     list_display = ("person", "caption", "event_date", "created_at")
+    list_filter = ("person__tree",)
+
+
+@admin.register(Comment)
+class CommentAdmin(admin.ModelAdmin):
+    list_display = ("person", "author", "created_at")
     list_filter = ("person__tree",)
 
 

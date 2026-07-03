@@ -1,6 +1,7 @@
 from django.urls import path
 
 from .views import (
+    CommentViewSet,
     LifeEventViewSet,
     MediaItemViewSet,
     OnThisDayView,
@@ -32,6 +33,9 @@ event_list = LifeEventViewSet.as_view({"get": "list", "post": "create"})
 event_detail = LifeEventViewSet.as_view(
     {"get": "retrieve", "patch": "partial_update", "delete": "destroy"}
 )
+
+comment_list = CommentViewSet.as_view({"get": "list", "post": "create"})
+comment_detail = CommentViewSet.as_view({"delete": "destroy"})
 
 share_list = ShareLinkViewSet.as_view({"get": "list", "post": "create"})
 share_detail = ShareLinkViewSet.as_view({"delete": "destroy"})
@@ -91,6 +95,17 @@ urlpatterns = [
         "trees/<int:tree_id>/people/<int:person_id>/events/<int:pk>/",
         event_detail,
         name="event-detail",
+    ),
+    # Comments / stories
+    path(
+        "trees/<int:tree_id>/people/<int:person_id>/comments/",
+        comment_list,
+        name="comment-list",
+    ),
+    path(
+        "trees/<int:tree_id>/people/<int:person_id>/comments/<int:pk>/",
+        comment_detail,
+        name="comment-detail",
     ),
     # Owner-managed share links
     path("trees/<int:tree_id>/share-links/", share_list, name="sharelink-list"),

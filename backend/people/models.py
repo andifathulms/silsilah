@@ -297,6 +297,27 @@ class LifeEvent(models.Model):
         return f"{self.get_type_display()} of {self.person}"
 
 
+class Comment(models.Model):
+    """A collaborative memory/story left on a Person by a tree member.
+
+    Turns the notes field into a conversation — relatives can add anecdotes,
+    corrections, and stories without overwriting each other.
+    """
+
+    person = models.ForeignKey(
+        Person, on_delete=models.CASCADE, related_name="comments"
+    )
+    author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    body = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Comment on {self.person} by {self.author}"
+
+
 class ShareLink(models.Model):
     """A tokenized, read-only public link into a tree.
 

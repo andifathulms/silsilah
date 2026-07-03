@@ -9,8 +9,9 @@ from rest_framework.views import APIView
 from trees.models import Tree
 from trees.permissions import IsTreeMember, IsTreeOwner
 
-from .models import LifeEvent, MediaItem, Person, Relationship, ShareLink
+from .models import Comment, LifeEvent, MediaItem, Person, Relationship, ShareLink
 from .serializers import (
+    CommentSerializer,
     LifeEventSerializer,
     MediaItemSerializer,
     PersonChangeLogSerializer,
@@ -178,6 +179,38 @@ class MediaItemViewSet(TreeScopedMixin, viewsets.ModelViewSet):
             Person, pk=self.kwargs["person_id"], tree_id=self.kwargs["tree_id"]
         )
         serializer.save(person=person)
+
+
+class CommentViewSet(TreeScopedMixin, viewsets.ModelViewSet):
+    """Collaborative memories/stories on a Person.
+
+    Any member reads; Editor+ posts (enforced by IsTreeMember). A comment can
+    be deleted by its author or the tree owner.
+    """
+
+    serializer_class = CommentSerializer
+
+    def get_queryset(self):
+        return Comment.objects.filter(
+            person_id=self.kwargs["person_id"],
+            person__tree_id=self.kwargs["tree_id"],
+        ).select_related("author")
+
+    def perform_create(self, serializer):
+        person = get_object_or_404(
+            Person, pk=self.kwargs["person_id"], tree_id=self.kwargs["tree_id"]
+        )
+        serializer.save(person=person, author=self.request.user)
+
+    def destroy(self, request, *args, **kwargs):
+        comment = self.get_object()
+        is_owner = self.get_role() == "owner"
+        if comment.author_id != request.user.id and not is_owner:
+            return Response(
+                {"detail": "Only the author or tree owner can delete this comment."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        return super().destroy(request, *args, **kwargs)
 
 
 class LifeEventViewSet(TreeScopedMixin, viewsets.ModelViewSet):

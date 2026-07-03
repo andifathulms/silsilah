@@ -3,6 +3,7 @@ from rest_framework import serializers
 from trees.models import TreeMembership
 
 from .models import (
+    Comment,
     LifeEvent,
     MediaItem,
     Person,
@@ -123,6 +124,17 @@ class MediaItemSerializer(serializers.ModelSerializer):
         model = MediaItem
         fields = ["id", "person", "image", "caption", "event_date", "created_at"]
         read_only_fields = ["id", "person", "created_at"]
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    author_username = serializers.CharField(
+        source="author.username", read_only=True, default=None
+    )
+
+    class Meta:
+        model = Comment
+        fields = ["id", "person", "author", "author_username", "body", "created_at"]
+        read_only_fields = ["id", "person", "author", "created_at"]
 
 
 class LifeEventSerializer(serializers.ModelSerializer):
