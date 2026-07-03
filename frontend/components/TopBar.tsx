@@ -30,6 +30,7 @@ export default function TopBar() {
 
   return (
     <header className="topbar">
+      <div className="topbar-inner">
       <Link href="/" className="brand">
         <span className="brand-mark">🌳</span> Silsilah
       </Link>
@@ -68,6 +69,7 @@ export default function TopBar() {
             </div>
           </>
         )}
+      </div>
       </div>
     </header>
   );

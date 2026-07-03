@@ -41,6 +41,17 @@ function splitName(name: string): [string, string] {
   return [parts[0], parts.slice(1).join(" ")];
 }
 
+/** Human-friendly lifespan for a node label, e.g. "1940 – 2015", "b. 1965",
+ * "1943 –". Avoids showing raw ISO dates like "1965-11-02" on the card. */
+function lifespanLabel(p: Person): string | undefined {
+  const b = p.birth_date ? p.birth_date.slice(0, 4) : "";
+  const d = p.death_date ? p.death_date.slice(0, 4) : "";
+  if (b && d) return `${b} – ${d}`;
+  if (b) return p.is_living ? `b. ${b}` : `${b} –`;
+  if (d) return `d. ${d}`;
+  return undefined;
+}
+
 export function toFamilyChartData(
   people: Person[],
   relationships: Relationship[]
@@ -58,7 +69,7 @@ export function toFamilyChartData(
         "last name": last,
         gender: toGenderCode(p.gender),
         avatar: p.photo || undefined,
-        birthday: p.birth_date || undefined,
+        birthday: lifespanLabel(p),
         _living: p.is_living,
         _redacted: Boolean(p._private_redacted),
       },

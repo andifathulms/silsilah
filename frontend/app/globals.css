@@ -58,6 +58,10 @@
   --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, "Times New Roman", serif;
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
 
+  /* Shared layout rhythm — topbar and page content align to the same gutter */
+  --content-max: 1200px;
+  --gutter: clamp(1rem, 4vw, 2rem);
+
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -246,24 +250,29 @@ textarea { resize: vertical; }
 
 /* ---------- Layout ---------- */
 .container {
-  max-width: 1000px;
+  max-width: var(--content-max);
   margin: 0 auto;
-  padding: 2rem 1.5rem 4rem;
+  padding: 2rem var(--gutter) 4rem;
 }
 
 .topbar {
   position: sticky;
   top: 0;
   z-index: 50;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.85rem 1.5rem;
+  padding: 0;
   background: rgba(255, 253, 248, 0.72);
   backdrop-filter: saturate(1.4) blur(14px);
   -webkit-backdrop-filter: saturate(1.4) blur(14px);
   border-bottom: 1px solid var(--border);
+}
+.topbar-inner {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 0.8rem var(--gutter);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
 }
 .topbar .brand {
   font-family: var(--font-serif);
@@ -389,11 +398,12 @@ textarea { resize: vertical; }
 .tree-stage .f3 { position: relative; z-index: 1; background: transparent !important; border: 0 !important; }
 
 /* family-chart theming — recolor nodes with the Heritage palette.
-   The library exposes these CSS variables for card fills. */
-.f3 {
-  --male-color: #2f6d54;      /* evergreen */
-  --female-color: #b3823a;    /* heirloom gold-brown */
-  --genderless-color: #7c8178;
+   The library defines these on `.f3`, so we override at higher specificity
+   (`.tree-stage .f3`) to win the cascade regardless of import order. */
+.tree-stage .f3 {
+  --male-color: #3f7d68;      /* deep sage — ties to the evergreen brand */
+  --female-color: #b3765f;    /* warm terracotta — pairs with the gold accent */
+  --genderless-color: #8a8578;
 }
 .f3 .link {
   stroke: rgba(20, 80, 58, 0.45) !important;
@@ -741,7 +751,7 @@ textarea { resize: vertical; }
 }
 
 /* ---------- Tree view page ---------- */
-.tree-container { max-width: 1280px; }
+.tree-container { max-width: var(--content-max); }
 .crumbs {
   display: flex;
   align-items: center;

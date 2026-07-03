@@ -41,16 +41,18 @@ export default function PublicSharePage() {
   return (
     <>
       <header className="topbar">
-        <span className="brand">
-          <span className="brand-mark">🌳</span> {share.tree.name}
-        </span>
-        <div className="row">
-          <span className="badge">
-            👁 Read-only{share.scope === "branch" ? " · branch" : ""}
+        <div className="topbar-inner">
+          <span className="brand">
+            <span className="brand-mark">🌳</span> {share.tree.name}
           </span>
-          <a href="/login">
-            <button className="primary sm">Build your own →</button>
-          </a>
+          <div className="row">
+            <span className="badge">
+              👁 Read-only{share.scope === "branch" ? " · branch" : ""}
+            </span>
+            <a href="/login">
+              <button className="primary sm">Build your own →</button>
+            </a>
+          </div>
         </div>
       </header>
       <div className="container tree-container">
