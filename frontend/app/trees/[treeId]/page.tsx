@@ -12,6 +12,7 @@ import Modal from "@/components/Modal";
 import PersonForm from "@/components/person-form/PersonForm";
 import RelationshipForm from "@/components/relationship-form/RelationshipForm";
 import MembersPanel from "@/components/members/MembersPanel";
+import ShareLinksPanel from "@/components/share/ShareLinksPanel";
 
 export default function TreePage() {
   const params = useParams();
@@ -28,6 +29,7 @@ export default function TreePage() {
   const [showAddPerson, setShowAddPerson] = useState(false);
   const [showAddRel, setShowAddRel] = useState(false);
   const [showMembers, setShowMembers] = useState(false);
+  const [showShare, setShowShare] = useState(false);
 
   const canEdit = tree?.my_role === "owner" || tree?.my_role === "editor";
   const isOwner = tree?.my_role === "owner";
@@ -65,14 +67,6 @@ export default function TreePage() {
     router.push("/");
   }
 
-  async function togglePublic() {
-    if (!tree) return;
-    const updated = await api.updateTree(treeId, {
-      is_public_link_enabled: !tree.is_public_link_enabled,
-    });
-    setTree(updated);
-  }
-
   return (
     <>
       <TopBar />
@@ -100,9 +94,7 @@ export default function TreePage() {
             {isOwner && (
               <>
                 <button onClick={() => setShowMembers(true)}>Members</button>
-                <button onClick={togglePublic}>
-                  {tree?.is_public_link_enabled ? "Public link: on" : "Public link: off"}
-                </button>
+                <button onClick={() => setShowShare(true)}>Share</button>
                 <button className="danger" onClick={handleDeleteTree}>
                   Delete
                 </button>
@@ -182,6 +174,12 @@ export default function TreePage() {
       {showMembers && tree && (
         <Modal title="Members & invites" onClose={() => setShowMembers(false)}>
           <MembersPanel treeId={treeId} />
+        </Modal>
+      )}
+
+      {showShare && tree && (
+        <Modal title="Public share links" onClose={() => setShowShare(false)}>
+          <ShareLinksPanel treeId={treeId} people={people} />
         </Modal>
       )}
     </>
