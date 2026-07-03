@@ -39,6 +39,22 @@ npm run dev
 
 Backend runs on http://localhost:8000, frontend on http://localhost:3000.
 
+## Features
+
+- Multi-user trees with Owner / Editor / Viewer roles per tree
+- Generic `Relationship` edges (parent-child, spouse) — supports remarriage,
+  adoption, unknown parents, half-siblings
+- Cycle prevention enforced on write; siblings/grandparents derived on read
+- Per-person change log (who changed what, when)
+- Privacy: living people's birth date / photo / notes / media hidden from
+  Viewers and public visitors
+- **Photos** attached to a Person, optionally tied to a life event (caption +
+  date) — see `MediaItem`
+- **Share links**: owner-generated, read-only, tokenized public links, either
+  whole-tree or scoped to a single person's **branch** (descendants + spouses,
+  optionally ancestors). Public visitors get Viewer-level privacy.
+  Frontend route: `/share/<token>`; API: `GET /api/share/<token>/`
+
 ## Project layout
 
 ```
