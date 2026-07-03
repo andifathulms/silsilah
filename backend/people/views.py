@@ -8,8 +8,9 @@ from rest_framework.views import APIView
 from trees.models import Tree
 from trees.permissions import IsTreeMember, IsTreeOwner
 
-from .models import MediaItem, Person, Relationship, ShareLink
+from .models import LifeEvent, MediaItem, Person, Relationship, ShareLink
 from .serializers import (
+    LifeEventSerializer,
     MediaItemSerializer,
     PersonChangeLogSerializer,
     PersonSerializer,
@@ -176,6 +177,29 @@ class MediaItemViewSet(TreeScopedMixin, viewsets.ModelViewSet):
             Person, pk=self.kwargs["person_id"], tree_id=self.kwargs["tree_id"]
         )
         serializer.save(person=person)
+
+
+class LifeEventViewSet(TreeScopedMixin, viewsets.ModelViewSet):
+    """Timeline events for a Person (birth, marriage, migration, …).
+
+    A living person's events are hidden from Viewers and public visitors.
+    """
+
+    serializer_class = LifeEventSerializer
+
+    def get_person(self):
+        return get_object_or_404(
+            Person, pk=self.kwargs["person_id"], tree_id=self.kwargs["tree_id"]
+        )
+
+    def get_queryset(self):
+        person = self.get_person()
+        if person.is_living and self.get_role() not in EDITOR_ROLES:
+            return LifeEvent.objects.none()
+        return person.events.all()
+
+    def perform_create(self, serializer):
+        serializer.save(person=self.get_person())
 
 
 class ShareLinkViewSet(viewsets.ModelViewSet):

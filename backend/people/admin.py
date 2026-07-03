@@ -1,6 +1,13 @@
 from django.contrib import admin
 
-from .models import MediaItem, Person, PersonChangeLog, Relationship, ShareLink
+from .models import (
+    LifeEvent,
+    MediaItem,
+    Person,
+    PersonChangeLog,
+    Relationship,
+    ShareLink,
+)
 
 
 @admin.register(Person)
@@ -26,6 +33,12 @@ class PersonChangeLogAdmin(admin.ModelAdmin):
 class MediaItemAdmin(admin.ModelAdmin):
     list_display = ("person", "caption", "event_date", "created_at")
     list_filter = ("person__tree",)
+
+
+@admin.register(LifeEvent)
+class LifeEventAdmin(admin.ModelAdmin):
+    list_display = ("person", "type", "title", "date", "place")
+    list_filter = ("type", "person__tree")
 
 
 @admin.register(ShareLink)

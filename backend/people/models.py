@@ -259,6 +259,44 @@ class MediaItem(models.Model):
         return f"Media for {self.person}: {self.caption or self.image.name}"
 
 
+class LifeEvent(models.Model):
+    """A dated event in a person's life — birth, marriage, migration, career,
+    etc. Powers the per-person timeline and the places/map view.
+
+    Subject to the same privacy rule as other personal detail: a living
+    person's events are hidden from Viewers and public visitors.
+    """
+
+    TYPE_CHOICES = [
+        ("birth", "Birth"),
+        ("marriage", "Marriage"),
+        ("death", "Death"),
+        ("education", "Education"),
+        ("career", "Career"),
+        ("residence", "Residence"),
+        ("immigration", "Immigration / migration"),
+        ("military", "Military"),
+        ("religious", "Religious"),
+        ("other", "Other"),
+    ]
+
+    person = models.ForeignKey(
+        Person, on_delete=models.CASCADE, related_name="events"
+    )
+    type = models.CharField(max_length=20, choices=TYPE_CHOICES, default="other")
+    title = models.CharField(max_length=200, blank=True)
+    date = models.DateField(null=True, blank=True)
+    place = models.CharField(max_length=200, blank=True)  # feeds the map view
+    description = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["date", "created_at"]
+
+    def __str__(self):
+        return f"{self.get_type_display()} of {self.person}"
+
+
 class ShareLink(models.Model):
     """A tokenized, read-only public link into a tree.
 

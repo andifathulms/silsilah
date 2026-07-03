@@ -1,6 +1,7 @@
 from django.urls import path
 
 from .views import (
+    LifeEventViewSet,
     MediaItemViewSet,
     PersonViewSet,
     PublicShareView,
@@ -25,6 +26,11 @@ rel_detail = RelationshipViewSet.as_view(
 
 media_list = MediaItemViewSet.as_view({"get": "list", "post": "create"})
 media_detail = MediaItemViewSet.as_view({"delete": "destroy"})
+
+event_list = LifeEventViewSet.as_view({"get": "list", "post": "create"})
+event_detail = LifeEventViewSet.as_view(
+    {"get": "retrieve", "patch": "partial_update", "delete": "destroy"}
+)
 
 share_list = ShareLinkViewSet.as_view({"get": "list", "post": "create"})
 share_detail = ShareLinkViewSet.as_view({"delete": "destroy"})
@@ -73,6 +79,17 @@ urlpatterns = [
         "trees/<int:tree_id>/people/<int:person_id>/media/<int:pk>/",
         media_detail,
         name="media-detail",
+    ),
+    # Per-person life events (timeline)
+    path(
+        "trees/<int:tree_id>/people/<int:person_id>/events/",
+        event_list,
+        name="event-list",
+    ),
+    path(
+        "trees/<int:tree_id>/people/<int:person_id>/events/<int:pk>/",
+        event_detail,
+        name="event-detail",
     ),
     # Owner-managed share links
     path("trees/<int:tree_id>/share-links/", share_list, name="sharelink-list"),

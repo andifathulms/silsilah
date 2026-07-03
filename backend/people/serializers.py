@@ -2,7 +2,14 @@ from rest_framework import serializers
 
 from trees.models import TreeMembership
 
-from .models import MediaItem, Person, PersonChangeLog, Relationship, ShareLink
+from .models import (
+    LifeEvent,
+    MediaItem,
+    Person,
+    PersonChangeLog,
+    Relationship,
+    ShareLink,
+)
 
 # Fields hidden from Viewers / anonymous public-link visitors when the person
 # is still living (PRD #20).
@@ -115,6 +122,25 @@ class MediaItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = MediaItem
         fields = ["id", "person", "image", "caption", "event_date", "created_at"]
+        read_only_fields = ["id", "person", "created_at"]
+
+
+class LifeEventSerializer(serializers.ModelSerializer):
+    type_display = serializers.CharField(source="get_type_display", read_only=True)
+
+    class Meta:
+        model = LifeEvent
+        fields = [
+            "id",
+            "person",
+            "type",
+            "type_display",
+            "title",
+            "date",
+            "place",
+            "description",
+            "created_at",
+        ]
         read_only_fields = ["id", "person", "created_at"]
 
 
