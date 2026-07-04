@@ -1,8 +1,9 @@
-"""Compute a human-readable relationship label between two people.
+"""Compute the relationship between two people.
 
-Uses the parent_child edges to find the closest common ancestor and classify
-the pair (parent, cousin, aunt/uncle, N-times-removed, …). Spouse edges are
-checked first for the direct-marriage case.
+The graph walk finds the closest common ancestor and classifies the pair. It
+returns a *structured* descriptor (kind + generations up/down + gender) so the
+frontend can compose a localized label; ``describe_relationship`` builds the
+English label from that same structure for API consumers.
 """
 from django.db.models import Q
 
@@ -22,13 +23,13 @@ def _greats(n):
     return "great-" * (n - 1)
 
 
-def _by_gender(gender, male, female, neutral):
+def _gender_code(gender):
     g = (gender or "").lower()
     if g.startswith("m"):
-        return male
+        return "M"
     if g.startswith("f") or g.startswith("w"):
-        return female
-    return neutral
+        return "F"
+    return ""
 
 
 def _ancestor_depths(start_id, parent_map):
@@ -40,7 +41,7 @@ def _ancestor_depths(start_id, parent_map):
         d += 1
         nxt = []
         for pid in frontier:
-            for parent in parent_map.get(pid, ()):  # parents of pid
+            for parent in parent_map.get(pid, ()):
                 if parent not in depths:
                     depths[parent] = d
                     nxt.append(parent)
@@ -48,75 +49,97 @@ def _ancestor_depths(start_id, parent_map):
     return depths
 
 
-def describe_relationship(person, other, tree_id):
-    """Return a string describing how `other` is related to `person`."""
-    if person.id == other.id:
-        return "the same person"
+def relationship_structure(person, other, tree_id):
+    """Return {kind, up, down, gender} describing how `other` relates to
+    `person`. `up` = generations from person to the common ancestor, `down` =
+    from other to it. `kind` is one of: self, spouse, ancestor, descendant,
+    sibling, pibling (aunt/uncle), nibling (niece/nephew), cousin, unrelated.
+    """
+    gender = _gender_code(other.gender)
 
-    # Direct spouse?
+    if person.id == other.id:
+        return {"kind": "self", "up": 0, "down": 0, "gender": gender}
+
     is_spouse = Relationship.objects.filter(
         tree_id=tree_id, type=Relationship.TYPE_SPOUSE
     ).filter(
         Q(person_a=person, person_b=other) | Q(person_a=other, person_b=person)
     ).exists()
     if is_spouse:
-        return _by_gender(other.gender, "husband", "wife", "spouse")
+        return {"kind": "spouse", "up": 0, "down": 0, "gender": gender}
 
-    # Build parent map for the whole tree.
     parent_map = {}
     for a_id, b_id in Relationship.objects.filter(
         tree_id=tree_id, type=Relationship.TYPE_PARENT_CHILD
     ).values_list("person_a_id", "person_b_id"):
-        parent_map.setdefault(b_id, set()).add(a_id)  # child -> parents
+        parent_map.setdefault(b_id, set()).add(a_id)
 
     da = _ancestor_depths(person.id, parent_map)
     db = _ancestor_depths(other.id, parent_map)
-
     common = set(da) & set(db)
     if not common:
-        return "not directly related by blood"
+        return {"kind": "unrelated", "up": 0, "down": 0, "gender": gender}
 
-    # Closest common ancestor: minimize combined distance.
     c = min(common, key=lambda x: (da[x] + db[x], max(da[x], db[x])))
-    dp, do = da[c], db[c]  # dp = person→ancestor, do = other→ancestor
+    dp, do = da[c], db[c]
 
-    # other is a direct descendant of person (person is the ancestor)
     if dp == 0:
-        if do == 1:
-            return _by_gender(other.gender, "son", "daughter", "child")
-        if do == 2:
-            return _by_gender(other.gender, "grandson", "granddaughter", "grandchild")
-        return _greats(do - 1) + _by_gender(
-            other.gender, "grandson", "granddaughter", "grandchild"
-        )
+        kind = "descendant"
+    elif do == 0:
+        kind = "ancestor"
+    elif dp == 1 and do == 1:
+        kind = "sibling"
+    elif do == 1:
+        kind = "pibling"
+    elif dp == 1:
+        kind = "nibling"
+    else:
+        kind = "cousin"
+    return {"kind": kind, "up": dp, "down": do, "gender": gender}
 
-    # other is a direct ancestor of person
-    if do == 0:
-        if dp == 1:
-            return _by_gender(other.gender, "father", "mother", "parent")
-        if dp == 2:
-            return _by_gender(other.gender, "grandfather", "grandmother", "grandparent")
-        return _greats(dp - 1) + _by_gender(
-            other.gender, "grandfather", "grandmother", "grandparent"
-        )
 
-    # Siblings
-    if dp == 1 and do == 1:
-        return _by_gender(other.gender, "brother", "sister", "sibling")
+def _by_gender(g, male, female, neutral):
+    return male if g == "M" else female if g == "F" else neutral
 
-    # Aunt/uncle (other is a sibling of an ancestor of person)
-    if do == 1:
-        base = _by_gender(other.gender, "uncle", "aunt", "aunt or uncle")
-        return _greats(dp - 2) + ("grand" + base if dp >= 3 else base) if dp >= 3 else base
 
-    # Niece/nephew (other is a descendant of person's sibling)
-    if dp == 1:
-        base = _by_gender(other.gender, "nephew", "niece", "niece or nephew")
-        return _greats(do - 2) + ("grand" + base if do >= 3 else base) if do >= 3 else base
+def describe_relationship(person, other, tree_id):
+    """English label for `other` relative to `person` (built from structure)."""
+    s = relationship_structure(person, other, tree_id)
+    kind, up, down, g = s["kind"], s["up"], s["down"], s["gender"]
 
-    # Cousins: degree = min - 1, removal = |dp - do|
-    degree = min(dp, do) - 1
-    removal = abs(dp - do)
+    if kind == "self":
+        return "the same person"
+    if kind == "unrelated":
+        return "not directly related by blood"
+    if kind == "spouse":
+        return _by_gender(g, "husband", "wife", "spouse")
+    if kind == "descendant":
+        if down == 1:
+            return _by_gender(g, "son", "daughter", "child")
+        if down == 2:
+            return _by_gender(g, "grandson", "granddaughter", "grandchild")
+        return _greats(down - 1) + _by_gender(g, "grandson", "granddaughter", "grandchild")
+    if kind == "ancestor":
+        if up == 1:
+            return _by_gender(g, "father", "mother", "parent")
+        if up == 2:
+            return _by_gender(g, "grandfather", "grandmother", "grandparent")
+        return _greats(up - 1) + _by_gender(g, "grandfather", "grandmother", "grandparent")
+    if kind == "sibling":
+        return _by_gender(g, "brother", "sister", "sibling")
+    if kind == "pibling":
+        base = _by_gender(g, "uncle", "aunt", "aunt or uncle")
+        if up >= 3:
+            return (_greats(up - 2) + "grand" + base) if up >= 4 else "grand" + base
+        return base
+    if kind == "nibling":
+        base = _by_gender(g, "nephew", "niece", "niece or nephew")
+        if down >= 3:
+            return (_greats(down - 2) + "grand" + base) if down >= 4 else "grand" + base
+        return base
+    # cousin
+    degree = min(up, down) - 1
+    removal = abs(up - down)
     label = f"{_ordinal(degree)} cousin"
     if removal == 1:
         label += " once removed"

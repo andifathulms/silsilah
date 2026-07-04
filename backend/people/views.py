@@ -109,16 +109,23 @@ class PersonViewSet(TreeScopedMixin, viewsets.ModelViewSet):
         url_path="relationship-to/(?P<other_id>[0-9]+)",
     )
     def relationship_to(self, request, tree_id=None, pk=None, other_id=None):
-        from .relationship_utils import describe_relationship
+        from .relationship_utils import describe_relationship, relationship_structure
 
         person = self.get_object()
         other = get_object_or_404(Person, pk=other_id, tree_id=tree_id)
+        struct = relationship_structure(person, other, int(tree_id))
         label = describe_relationship(person, other, int(tree_id))
         return Response(
             {
                 "person": person.id,
                 "other": other.id,
                 "other_name": other.name,
+                # Structured descriptor — the frontend composes a localized label.
+                "kind": struct["kind"],
+                "up": struct["up"],
+                "down": struct["down"],
+                "gender": struct["gender"],
+                # English fallback for non-i18n API consumers.
                 "label": label,
                 "sentence": f"{other.name} is {person.name}'s {label}."
                 if label not in ("the same person", "not directly related by blood")
