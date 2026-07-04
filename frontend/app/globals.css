@@ -855,6 +855,36 @@ textarea { resize: vertical; }
   border-radius: var(--r);
 }
 
+.suggest-box {
+  margin-top: 1rem;
+  padding: 0.75rem 0.85rem;
+  background: var(--gold-100);
+  border: 1px solid #ecdca6;
+  border-radius: var(--r);
+}
+:root[data-theme="dark"] .suggest-box { border-color: #5a4d1e; }
+.suggest-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--gold-600);
+  margin-bottom: 0.5rem;
+}
+.suggest-chip {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 0.5rem 0.7rem;
+  font-size: 0.88rem;
+  margin-bottom: 0.4rem;
+}
+.suggest-chip:last-child { margin-bottom: 0; }
+.suggest-chip:hover { border-color: var(--forest-400); background: var(--surface-2); }
+
 .detail-actions {
   display: flex;
   gap: 0.5rem;

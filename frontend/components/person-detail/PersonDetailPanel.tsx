@@ -9,6 +9,9 @@ interface Props {
   treeId: number;
   person: Person;
   canEdit?: boolean;
+  coParentSuggestions?: Person[];
+  onLinkParent?: (parentId: number) => void;
+  onToggleLiving?: () => void;
   onRecenter?: (personId: number) => void;
   onAddRelative?: (kind: "parent" | "child" | "spouse" | "sibling") => void;
 }
@@ -31,6 +34,9 @@ export default function PersonDetailPanel({
   treeId,
   person,
   canEdit,
+  coParentSuggestions = [],
+  onLinkParent,
+  onToggleLiving,
   onRecenter,
   onAddRelative,
 }: Props) {
@@ -99,6 +105,18 @@ export default function PersonDetailPanel({
         <p className="muted" style={{ fontSize: "0.85rem" }}>Loading relatives…</p>
       )}
 
+      {canEdit && onLinkParent && coParentSuggestions.length > 0 && (
+        <div className="suggest-box">
+          <div className="suggest-title">💡 Suggested connection</div>
+          {coParentSuggestions.map((s) => (
+            <button key={s.id} className="suggest-chip" onClick={() => onLinkParent(s.id)}>
+              ＋ Add <strong>{s.name}</strong> as a parent
+              <span className="muted"> (married to a parent)</span>
+            </button>
+          ))}
+        </div>
+      )}
+
       {canEdit && onAddRelative && (
         <div className="quick-add">
           <span className="rel-label" style={{ alignSelf: "center" }}>Add</span>
@@ -106,6 +124,14 @@ export default function PersonDetailPanel({
           <button className="sm" onClick={() => onAddRelative("sibling")}>+ Sibling</button>
           <button className="sm" onClick={() => onAddRelative("spouse")}>+ Spouse</button>
           <button className="sm" onClick={() => onAddRelative("child")}>+ Child</button>
+        </div>
+      )}
+
+      {canEdit && onToggleLiving && (
+        <div style={{ marginTop: "0.75rem" }}>
+          <button className="sm" style={{ width: "100%" }} onClick={onToggleLiving}>
+            {person.is_living ? "🕊 Mark as deceased" : "↩ Mark as living"}
+          </button>
         </div>
       )}
 

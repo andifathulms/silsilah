@@ -70,6 +70,41 @@ export default function TreePage() {
 
   const selected = people.find((p) => p.id === selectedId) || null;
 
+  // A parent's spouse who isn't ALSO a parent of the selected person is a
+  // likely missing co-parent (the exact "marriage ≠ parenthood" gap).
+  const coParentSuggestions: Person[] = (() => {
+    if (!selected) return [];
+    const parentIds = relationships
+      .filter((r) => r.type === "parent_child" && r.person_b === selected.id)
+      .map((r) => r.person_a);
+    const parentSet = new Set(parentIds);
+    const found = new Set<number>();
+    for (const pid of parentIds) {
+      for (const r of relationships) {
+        if (r.type !== "spouse") continue;
+        const other = r.person_a === pid ? r.person_b : r.person_b === pid ? r.person_a : null;
+        if (other != null && other !== selected.id && !parentSet.has(other)) found.add(other);
+      }
+    }
+    return [...found].map((id) => people.find((p) => p.id === id)).filter(Boolean) as Person[];
+  })();
+
+  async function linkParent(parentId: number) {
+    if (!selected) return;
+    await api.createRelationship(treeId, {
+      type: "parent_child",
+      person_a: parentId,
+      person_b: selected.id,
+    });
+    await reload();
+  }
+
+  async function toggleLiving() {
+    if (!selected) return;
+    await api.updatePerson(treeId, selected.id, { is_living: !selected.is_living });
+    await reload();
+  }
+
   async function handleDeleteTree() {
     if (!confirm(`Delete "${tree?.name}"? This cannot be undone.`)) return;
     await api.deleteTree(treeId);
@@ -189,6 +224,9 @@ export default function TreePage() {
                 treeId={treeId}
                 person={selected}
                 canEdit={canEdit}
+                coParentSuggestions={coParentSuggestions}
+                onLinkParent={linkParent}
+                onToggleLiving={toggleLiving}
                 onAddRelative={(kind) => setAddRelative(kind)}
                 onRecenter={(id) => {
                   setMainId(id);
@@ -307,6 +345,7 @@ export default function TreePage() {
             treeId={treeId}
             anchor={selected}
             kind={addRelative}
+            people={people}
             onCancel={() => setAddRelative(null)}
             onDone={async (createdId) => {
               setAddRelative(null);
