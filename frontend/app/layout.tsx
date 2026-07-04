@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Fraunces, Inter } from "next/font/google";
 import "./globals.css";
+import Providers from "@/components/Providers";
 
 // Display serif with soft, editorial character for headings; humanist sans for UI.
 const fraunces = Fraunces({
@@ -44,7 +45,9 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }

@@ -7,9 +7,11 @@ import { api } from "@/lib/api";
 import { isAuthenticated } from "@/lib/auth";
 import type { Tree, User } from "@/lib/types";
 import TopBar from "@/components/TopBar";
+import { useI18n } from "@/lib/i18n";
 
 export default function HomePage() {
   const router = useRouter();
+  const { t } = useI18n();
   const [user, setUser] = useState<User | null>(null);
   const [trees, setTrees] = useState<Tree[] | null>(null);
   const [newName, setNewName] = useState("");
@@ -39,7 +41,9 @@ export default function HomePage() {
     }
   }
 
-  const greeting = getGreeting();
+  const h = new Date().getHours();
+  const greeting =
+    h < 12 ? t("home.greetMorning") : h < 18 ? t("home.greetAfternoon") : t("home.greetEvening");
 
   return (
     <>
@@ -47,11 +51,8 @@ export default function HomePage() {
       <div className="container">
         <div className="animate-in">
           <div className="eyebrow">{greeting}{user ? `, ${user.username}` : ""}</div>
-          <h1>Your family trees</h1>
-          <p className="muted" style={{ maxWidth: "52ch" }}>
-            Each tree is a private space for one family. Open one to keep growing it,
-            or plant a new one below.
-          </p>
+          <h1>{t("home.title")}</h1>
+          <p className="muted" style={{ maxWidth: "52ch" }}>{t("home.subtitle")}</p>
         </div>
 
         {error && <div className="error">{error}</div>}
@@ -60,15 +61,15 @@ export default function HomePage() {
         <form onSubmit={createTree} className="create-tree animate-in d1">
           <div className="create-tree-mark">🌱</div>
           <div style={{ flex: 1 }}>
-            <label>Plant a new tree</label>
+            <label>{t("home.plantNew")}</label>
             <input
-              placeholder="e.g. The Rahman Family"
+              placeholder={t("home.placeholder")}
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
             />
           </div>
           <button className="primary" type="submit" disabled={creating}>
-            {creating ? "Creating…" : "Create tree"}
+            {creating ? t("home.creating") : t("home.createTree")}
           </button>
         </form>
 
@@ -82,32 +83,29 @@ export default function HomePage() {
         ) : trees.length === 0 ? (
           <div className="empty-state animate-in d2">
             <div className="empty-mark">🌳</div>
-            <h3>No trees yet</h3>
-            <p className="muted">
-              Create your first tree above and add the people you love — you can
-              connect them later.
-            </p>
+            <h3>{t("home.emptyTitle")}</h3>
+            <p className="muted">{t("home.emptyText")}</p>
           </div>
         ) : (
           <div className="tree-grid">
-            {trees.map((t, i) => (
+            {trees.map((tr, i) => (
               <Link
-                key={t.id}
-                href={`/trees/${t.id}`}
+                key={tr.id}
+                href={`/trees/${tr.id}`}
                 className={`card card-hover tree-card animate-in d${Math.min(i + 1, 4)}`}
               >
                 <div className="tree-card-top">
                   <span className="tree-card-glyph">🌳</span>
-                  <span className={`badge ${t.my_role === "owner" ? "owner" : "forest"}`}>
-                    {t.my_role}
+                  <span className={`badge ${tr.my_role === "owner" ? "owner" : "forest"}`}>
+                    {tr.my_role}
                   </span>
                 </div>
-                <h3 className="tree-card-name">{t.name}</h3>
+                <h3 className="tree-card-name">{tr.name}</h3>
                 <div className="tree-card-meta muted">
-                  <span>👥 {t.member_count} member{t.member_count === 1 ? "" : "s"}</span>
-                  {t.is_public_link_enabled && <span>· 🔗 shared</span>}
+                  <span>👥 {tr.member_count} {tr.member_count === 1 ? t("home.member") : t("home.members")}</span>
+                  {tr.is_public_link_enabled && <span>· 🔗 {t("home.shared")}</span>}
                 </div>
-                <span className="tree-card-open">Open tree →</span>
+                <span className="tree-card-open">{t("home.openTree")}</span>
               </Link>
             ))}
           </div>
@@ -115,11 +113,4 @@ export default function HomePage() {
       </div>
     </>
   );
-}
-
-function getGreeting(): string {
-  const h = new Date().getHours();
-  if (h < 12) return "Good morning";
-  if (h < 18) return "Good afternoon";
-  return "Good evening";
 }

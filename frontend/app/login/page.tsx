@@ -4,15 +4,17 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { setToken } from "@/lib/auth";
-
-const FEATURES = [
-  { icon: "🌳", title: "Every branch, in one place", text: "Remarriages, adoptions, half-siblings — real families, not rigid templates." },
-  { icon: "🤝", title: "Build it together", text: "Invite relatives to view or contribute. Roles keep everyone in sync." },
-  { icon: "🔒", title: "Private by default", text: "Details of living relatives stay hidden unless you choose to share." },
-];
+import { useI18n } from "@/lib/i18n";
+import LangToggle from "@/components/LangToggle";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { t } = useI18n();
+  const FEATURES = [
+    { icon: "🌳", title: t("login.f1t"), text: t("login.f1x") },
+    { icon: "🤝", title: t("login.f2t"), text: t("login.f2x") },
+    { icon: "🔒", title: t("login.f3t"), text: t("login.f3x") },
+  ];
   const [mode, setMode] = useState<"login" | "register">("login");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -60,15 +62,13 @@ export default function LoginPage() {
             <span className="brand-mark">🌳</span>
             <span>Silsilah</span>
           </div>
+          <div className="brand-gloss">{t("login.gloss")}</div>
 
           <h1 className="hero-title">
-            Every family has a story.
-            <span className="hero-accent"> Start telling yours.</span>
+            {t("login.heroTitle")}
+            <span className="hero-accent"> {t("login.heroAccent")}</span>
           </h1>
-          <p className="hero-sub">
-            A living family tree for the people you love — map generations,
-            preserve photos and memories, and rediscover how you're all connected.
-          </p>
+          <p className="hero-sub">{t("login.heroSub")}</p>
 
           <ul className="hero-features">
             {FEATURES.map((f) => (
@@ -82,15 +82,16 @@ export default function LoginPage() {
             ))}
           </ul>
 
-          <div className="hero-foot">
-            Trusted for families of 2 to 500+ · Private, invite-only trees
-          </div>
+          <div className="hero-foot">{t("login.heroFoot")}</div>
         </div>
         <TreeArt />
       </aside>
 
       {/* Right — auth card */}
       <main className="auth-panel">
+        <div style={{ position: "absolute", top: "1.25rem", right: "1.5rem" }}>
+          <LangToggle />
+        </div>
         <div className="auth-card animate-in">
           <div className="brand-lockup mobile-brand">
             <span className="brand-mark">🌳</span>
@@ -98,12 +99,10 @@ export default function LoginPage() {
           </div>
 
           <h2 className="auth-heading">
-            {mode === "login" ? "Welcome back" : "Create your account"}
+            {mode === "login" ? t("login.welcome") : t("login.createAccount")}
           </h2>
           <p className="muted" style={{ marginTop: "-0.3rem" }}>
-            {mode === "login"
-              ? "Pick up where your family left off."
-              : "It takes less than a minute to begin."}
+            {mode === "login" ? t("login.subLogin") : t("login.subRegister")}
           </p>
 
           <div className="segmented">
@@ -112,42 +111,42 @@ export default function LoginPage() {
               className={mode === "login" ? "active" : ""}
               onClick={() => setMode("login")}
             >
-              Log in
+              {t("login.tabLogin")}
             </button>
             <button
               type="button"
               className={mode === "register" ? "active" : ""}
               onClick={() => setMode("register")}
             >
-              Sign up
+              {t("login.tabSignup")}
             </button>
           </div>
 
           <form onSubmit={submit}>
             <div className="field">
-              <label>Username</label>
+              <label>{t("login.username")}</label>
               <input value={username} onChange={(e) => setUsername(e.target.value)} required autoFocus />
             </div>
             {mode === "register" && (
               <div className="field">
-                <label>Email</label>
+                <label>{t("login.email")}</label>
                 <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
               </div>
             )}
             <div className="field">
-              <label>Password</label>
+              <label>{t("login.password")}</label>
               <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} />
             </div>
             {error && <div className="error">{error}</div>}
             <button className="primary" type="submit" disabled={busy} style={{ width: "100%", marginTop: "0.4rem" }}>
-              {busy ? "Just a moment…" : mode === "login" ? "Log in" : "Create account"}
+              {busy ? t("login.busy") : mode === "login" ? t("login.btnLogin") : t("login.btnRegister")}
             </button>
           </form>
 
           <div className="demo-hint">
-            <span className="muted">Just exploring?</span>
+            <span className="muted">{t("login.demoHint")}</span>
             <button type="button" className="ghost sm" onClick={useDemo}>
-              Use demo account →
+              {t("login.demoBtn")}
             </button>
           </div>
         </div>

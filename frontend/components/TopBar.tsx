@@ -7,9 +7,12 @@ import { api } from "@/lib/api";
 import { clearToken } from "@/lib/auth";
 import type { User } from "@/lib/types";
 import ThemeToggle from "@/components/ThemeToggle";
+import LangToggle from "@/components/LangToggle";
+import { useI18n } from "@/lib/i18n";
 
 export default function TopBar() {
   const router = useRouter();
+  const { t } = useI18n();
   const [user, setUser] = useState<User | null>(null);
   const [menu, setMenu] = useState(false);
 
@@ -32,11 +35,12 @@ export default function TopBar() {
   return (
     <header className="topbar">
       <div className="topbar-inner">
-      <Link href="/" className="brand">
+      <Link href="/" className="brand" title={`Silsilah — ${t("brand.gloss")}`}>
         <span className="brand-mark">🌳</span> Silsilah
       </Link>
 
       <div className="row" style={{ gap: "0.5rem" }}>
+      <LangToggle />
       <ThemeToggle />
       <div style={{ position: "relative" }}>
         <button
@@ -47,7 +51,7 @@ export default function TopBar() {
           <span className="avatar" style={{ width: 30, height: 30, fontSize: "0.8rem" }}>
             {initial}
           </span>
-          <span className="hide-sm">{user?.username ?? "Account"}</span>
+          <span className="hide-sm">{user?.username ?? t("nav.account")}</span>
           <span className="muted" style={{ fontSize: "0.7rem" }}>▾</span>
         </button>
         {menu && (
@@ -64,10 +68,10 @@ export default function TopBar() {
                 </div>
               </div>
               <Link href="/" className="menu-item" onClick={() => setMenu(false)}>
-                🏡 My trees
+                🏡 {t("nav.myTrees")}
               </Link>
               <button className="menu-item danger-text" onClick={handleLogout}>
-                ↩ Log out
+                ↩ {t("nav.logout")}
               </button>
             </div>
           </>

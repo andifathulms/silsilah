@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { isAuthenticated } from "@/lib/auth";
+import { useI18n } from "@/lib/i18n";
 import type { Person, Relationship, Tree } from "@/lib/types";
 import TopBar from "@/components/TopBar";
 import TreeView from "@/components/tree-view/TreeView";
@@ -23,6 +24,7 @@ import ShareLinksPanel from "@/components/share/ShareLinksPanel";
 export default function TreePage() {
   const params = useParams();
   const router = useRouter();
+  const { t } = useI18n();
   const treeId = Number(params.treeId);
 
   const [tree, setTree] = useState<Tree | null>(null);
@@ -121,16 +123,16 @@ export default function TreePage() {
         {error && <div className="error">{error}</div>}
 
         <nav className="crumbs animate-in">
-          <Link href="/">My trees</Link>
+          <Link href="/">{t("tree.crumbMyTrees")}</Link>
           <span className="muted">/</span>
           <span className="muted">{tree?.name ?? "…"}</span>
         </nav>
 
         <header className="tree-header animate-in d1">
           <div>
-            <h1 style={{ marginBottom: "0.35rem" }}>{tree?.name ?? "Loading…"}</h1>
+            <h1 style={{ marginBottom: "0.35rem" }}>{tree?.name ?? t("home.loading")}</h1>
             <div className="row wrap" style={{ gap: "0.5rem" }}>
-              <span className="badge forest">👥 {people.length} people</span>
+              <span className="badge forest">👥 {t("tree.people", { count: people.length })}</span>
               {tree && <span className={`badge ${roleBadge}`}>{tree.my_role}</span>}
             </div>
           </div>
@@ -138,33 +140,33 @@ export default function TreePage() {
             {people.length > 0 && (
               <>
                 <button className="ghost" onClick={() => setShowPlaces(true)}>
-                  🗺 <span className="hide-sm">Places</span>
+                  🗺 <span className="hide-sm">{t("tree.places")}</span>
                 </button>
                 <Link href={`/trees/${treeId}/print`}>
-                  <button className="ghost">🖨 <span className="hide-sm">Print</span></button>
+                  <button className="ghost">🖨 <span className="hide-sm">{t("tree.print")}</span></button>
                 </Link>
               </>
             )}
             {canEdit && (
               <>
                 <button className="primary" onClick={() => setShowAddPerson(true)}>
-                  <span>＋</span> Add person
+                  <span>＋</span> {t("tree.addPerson")}
                 </button>
                 <button onClick={() => setShowAddRel(true)} disabled={people.length < 2}>
-                  🔗 <span className="hide-sm">Connect</span>
+                  🔗 <span className="hide-sm">{t("tree.connect")}</span>
                 </button>
                 <button className="ghost" onClick={() => setShowData(true)}>
-                  📁 <span className="hide-sm">Data</span>
+                  📁 <span className="hide-sm">{t("tree.data")}</span>
                 </button>
               </>
             )}
             {isOwner && (
               <div className="row" style={{ gap: "0.5rem" }}>
                 <button className="ghost" onClick={() => setShowMembers(true)}>
-                  👥 <span className="hide-sm">Members</span>
+                  👥 <span className="hide-sm">{t("tree.members")}</span>
                 </button>
                 <button className="ghost" onClick={() => setShowShare(true)}>
-                  🔗 <span className="hide-sm">Share</span>
+                  🔗 <span className="hide-sm">{t("tree.share")}</span>
                 </button>
                 <button className="icon-btn danger" onClick={handleDeleteTree} title="Delete tree">
                   🗑
@@ -215,7 +217,7 @@ export default function TreePage() {
               />
             )}
             {people.length > 0 && (
-              <div className="tree-hint">Click a person to focus · drag to pan · scroll to zoom</div>
+              <div className="tree-hint">{t("tree.hint")}</div>
             )}
           </div>
           <aside className="detail-col">
