@@ -215,9 +215,15 @@ export const api = {
     ),
 
   getRelationship: (treeId: number, personId: number, otherId: number) =>
-    request<{ label: string; sentence: string; other_name: string }>(
-      `/trees/${treeId}/people/${personId}/relationship-to/${otherId}/`
-    ),
+    request<{
+      label: string;
+      sentence: string;
+      other_name: string;
+      kind: string;
+      up: number;
+      down: number;
+      gender: string;
+    }>(`/trees/${treeId}/people/${personId}/relationship-to/${otherId}/`),
 
   // --- Relationships ------------------------------------------------------
   listRelationships: (treeId: number) =>

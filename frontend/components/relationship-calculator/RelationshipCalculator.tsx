@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import type { Person } from "@/lib/types";
 import { useI18n } from "@/lib/i18n";
+import { kinSentence } from "@/lib/kinship";
 
 interface Props {
   treeId: number;
@@ -12,7 +13,7 @@ interface Props {
 
 /** "How is X related to me?" — pick another person, get a kinship label. */
 export default function RelationshipCalculator({ treeId, person }: Props) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [people, setPeople] = useState<Person[]>([]);
   const [otherId, setOtherId] = useState<number | "">("");
   const [result, setResult] = useState<string | null>(null);
@@ -27,7 +28,14 @@ export default function RelationshipCalculator({ treeId, person }: Props) {
     setResult(null);
     try {
       const res = await api.getRelationship(treeId, person.id, id);
-      setResult(res.sentence);
+      setResult(
+        kinSentence(locale, t, res.other_name, person.name, {
+          kind: res.kind,
+          up: res.up,
+          down: res.down,
+          gender: res.gender,
+        })
+      );
     } catch {
       setResult(t("relcalc.error"));
     } finally {
