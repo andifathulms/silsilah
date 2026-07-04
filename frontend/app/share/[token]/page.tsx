@@ -5,6 +5,9 @@ import { useParams } from "next/navigation";
 import { fetchPublicShare, mediaUrl } from "@/lib/api";
 import type { PublicPerson, PublicShare } from "@/lib/types";
 import TreeView from "@/components/tree-view/TreeView";
+import { useI18n } from "@/lib/i18n";
+import LangToggle from "@/components/LangToggle";
+import { genderLabel } from "@/components/person-detail/PersonDetailPanel";
 
 /**
  * Anonymous, read-only view of a shared tree or branch. No auth: the token in
@@ -12,6 +15,7 @@ import TreeView from "@/components/tree-view/TreeView";
  */
 export default function PublicSharePage() {
   const params = useParams();
+  const { t } = useI18n();
   const token = String(params.token);
 
   const [share, setShare] = useState<PublicShare | null>(null);
@@ -30,10 +34,10 @@ export default function PublicSharePage() {
   if (error)
     return (
       <div className="container">
-        <div className="error">This share link is invalid or has been revoked.</div>
+        <div className="error">{t("pub.invalidLink")}</div>
       </div>
     );
-  if (!share) return <div className="container muted">Loading…</div>;
+  if (!share) return <div className="container muted">{t("common.loading")}</div>;
 
   const selected: PublicPerson | null =
     share.people.find((p) => p.id === selectedId) ?? null;
@@ -46,22 +50,21 @@ export default function PublicSharePage() {
             <span className="brand-mark">🌳</span> {share.tree.name}
           </span>
           <div className="row">
+            <LangToggle />
             <span className="badge">
-              👁 Read-only{share.scope === "branch" ? " · branch" : ""}
+              {t("pub.readonly")}{share.scope === "branch" ? t("pub.branch") : ""}
             </span>
             <a href="/login">
-              <button className="primary sm">Build your own →</button>
+              <button className="primary sm">{t("pub.buildYours")}</button>
             </a>
           </div>
         </div>
       </header>
       <div className="container tree-container">
         <div className="share-hero animate-in">
-          <div className="eyebrow">A shared family tree</div>
+          <div className="eyebrow">{t("pub.eyebrow")}</div>
           <h1 style={{ margin: "0.2rem 0 0.3rem" }}>{share.tree.name}</h1>
-          <p className="muted" style={{ margin: 0 }}>
-            Explore the family below. Details of living relatives are kept private.
-          </p>
+          <p className="muted" style={{ margin: 0 }}>{t("pub.explore")}</p>
         </div>
 
         <div className="tree-layout animate-in d1">
@@ -73,7 +76,7 @@ export default function PublicSharePage() {
               onSelect={setSelectedId}
             />
             {share.people.length > 0 && (
-              <div className="tree-hint">Click a person · drag to pan · scroll to zoom</div>
+              <div className="tree-hint">{t("tree.hint")}</div>
             )}
           </div>
           <aside className="detail-col">
@@ -82,14 +85,14 @@ export default function PublicSharePage() {
             ) : (
               <div className="card detail-empty">
                 <div className="empty-mark" style={{ fontSize: "2rem" }}>👆</div>
-                <p className="muted" style={{ margin: 0 }}>Select a person to see details.</p>
+                <p className="muted" style={{ margin: 0 }}>{t("pub.selectPerson")}</p>
               </div>
             )}
           </aside>
         </div>
 
         <footer className="share-foot muted">
-          Made with <strong style={{ color: "var(--forest-600)" }}>🌳 Silsilah</strong> — start your family's tree free.
+          {t("pub.madeWith")} <strong style={{ color: "var(--forest-600)" }}>🌳 Silsilah</strong> {t("pub.startFree")}
         </footer>
       </div>
     </>
@@ -97,6 +100,7 @@ export default function PublicSharePage() {
 }
 
 function ReadOnlyDetail({ person }: { person: PublicPerson }) {
+  const { t } = useI18n();
   const initial = person.name.charAt(0).toUpperCase();
   return (
     <div className="card detail-card">
@@ -106,17 +110,15 @@ function ReadOnlyDetail({ person }: { person: PublicPerson }) {
         <div style={{ minWidth: 0 }}>
           <h3 className="detail-name">{person.name}</h3>
           <div className="detail-sub">
-            {person.gender && <span>{titleCase(person.gender)} · </span>}
-            {person.is_living ? "Living" : "In memory"}
+            {person.gender && <span>{genderLabel(t, person.gender)} · </span>}
+            {person.is_living ? t("person.living") : t("person.inMemory")}
             {person.birth_date ? ` · b. ${person.birth_date}` : ""}
             {person.death_date ? ` · d. ${person.death_date}` : ""}
           </div>
         </div>
       </div>
       {person._private_redacted && (
-        <p className="muted" style={{ fontSize: "0.82rem", marginTop: 0 }}>
-          🔒 Details hidden for this living relative.
-        </p>
+        <p className="muted" style={{ fontSize: "0.82rem", marginTop: 0 }}>{t("pub.hidden")}</p>
       )}
       {person.notes && <p style={{ whiteSpace: "pre-wrap" }}>{person.notes}</p>}
       {person.media.length > 0 && (
@@ -131,8 +133,4 @@ function ReadOnlyDetail({ person }: { person: PublicPerson }) {
       )}
     </div>
   );
-}
-
-function titleCase(s: string) {
-  return s.charAt(0).toUpperCase() + s.slice(1);
 }

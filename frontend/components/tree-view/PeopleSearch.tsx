@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import type { Person } from "@/lib/types";
+import { useI18n } from "@/lib/i18n";
 
 interface Props {
   people: Person[];
@@ -13,6 +14,7 @@ interface Props {
  * already-loaded people client-side and re-centers the tree on the pick.
  */
 export default function PeopleSearch({ people, onPick }: Props) {
+  const { t } = useI18n();
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
@@ -53,7 +55,7 @@ export default function PeopleSearch({ people, onPick }: Props) {
       <span className="people-search-icon">🔍</span>
       <input
         value={query}
-        placeholder="Search people…"
+        placeholder={t("tree.searchPlaceholder")}
         onChange={(e) => {
           setQuery(e.target.value);
           setOpen(true);

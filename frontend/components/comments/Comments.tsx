@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import type { Comment } from "@/lib/types";
+import { useI18n } from "@/lib/i18n";
 
 interface Props {
   treeId: number;
@@ -13,6 +14,7 @@ interface Props {
 
 /** Collaborative memories/stories on a person. */
 export default function Comments({ treeId, personId, personName, canPost }: Props) {
+  const { t } = useI18n();
   const [comments, setComments] = useState<Comment[]>([]);
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
@@ -44,7 +46,7 @@ export default function Comments({ treeId, personId, personName, canPost }: Prop
   }
 
   async function remove(id: number) {
-    if (!confirm("Delete this memory?")) return;
+    if (!confirm(t("comments.deleteConfirm"))) return;
     await api.deleteComment(treeId, personId, id);
     await load();
   }
@@ -53,7 +55,7 @@ export default function Comments({ treeId, personId, personName, canPost }: Prop
     <div>
       {comments.length === 0 ? (
         <p className="muted" style={{ margin: canPost ? "0 0 1rem" : 0 }}>
-          No stories yet. {canPost ? `Share a memory of ${personName}.` : ""}
+          {t("comments.none")} {canPost ? t("comments.shareMemory", { name: personName }) : ""}
         </p>
       ) : (
         <div className="comment-list">
@@ -64,7 +66,7 @@ export default function Comments({ treeId, personId, personName, canPost }: Prop
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div className="row spread" style={{ gap: "0.5rem" }}>
-                  <strong style={{ fontSize: "0.9rem" }}>{c.author_username ?? "Someone"}</strong>
+                  <strong style={{ fontSize: "0.9rem" }}>{c.author_username ?? "—"}</strong>
                   <span className="muted" style={{ fontSize: "0.76rem" }}>
                     {new Date(c.created_at).toLocaleDateString()}
                   </span>
@@ -81,12 +83,12 @@ export default function Comments({ treeId, personId, personName, canPost }: Prop
         <form onSubmit={post} style={{ marginTop: comments.length ? "1rem" : 0 }}>
           <textarea
             rows={2}
-            placeholder={`Share a memory or story about ${personName}…`}
+            placeholder={t("comments.placeholder", { name: personName })}
             value={body}
             onChange={(e) => setBody(e.target.value)}
           />
           <button className="primary" type="submit" disabled={busy || !body.trim()} style={{ marginTop: "0.5rem" }}>
-            {busy ? "Posting…" : "Post memory"}
+            {busy ? t("comments.posting") : t("comments.post")}
           </button>
         </form>
       )}

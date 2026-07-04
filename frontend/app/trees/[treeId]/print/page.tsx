@@ -6,12 +6,14 @@ import { api } from "@/lib/api";
 import { isAuthenticated } from "@/lib/auth";
 import type { Person, Relationship, Tree } from "@/lib/types";
 import TreeView from "@/components/tree-view/TreeView";
+import { useI18n } from "@/lib/i18n";
 
 /** A print/PDF-friendly poster of the whole tree. Use the browser's
  *  Print dialog (⌘/Ctrl-P) and "Save as PDF" for a shareable keepsake. */
 export default function PrintPage() {
   const params = useParams();
   const router = useRouter();
+  const { t } = useI18n();
   const treeId = Number(params.treeId);
 
   const [tree, setTree] = useState<Tree | null>(null);
@@ -43,23 +45,23 @@ export default function PrintPage() {
   return (
     <div className="print-page">
       <div className="print-toolbar no-print">
-        <button onClick={() => router.push(`/trees/${treeId}`)}>← Back</button>
-        <span className="muted">Tip: choose “Save as PDF” in the print dialog for a keepsake.</span>
-        <button className="primary" onClick={() => window.print()}>🖨 Print / Save PDF</button>
+        <button onClick={() => router.push(`/trees/${treeId}`)}>{t("print.back")}</button>
+        <span className="muted">{t("print.tip")}</span>
+        <button className="primary" onClick={() => window.print()}>{t("print.printSave")}</button>
       </div>
 
       <div className="print-sheet">
         <header className="print-head">
-          <div className="eyebrow">Family Tree</div>
+          <div className="eyebrow">{t("print.familyTree")}</div>
           <h1 style={{ margin: "0.2rem 0" }}>{tree?.name ?? "…"}</h1>
-          <div className="muted">{people.length} people · generated {today}</div>
+          <div className="muted">{t("print.generated", { count: people.length, date: today })}</div>
         </header>
 
         <div className="print-canvas">
           <TreeView people={people} relationships={rels} />
         </div>
 
-        <footer className="print-foot muted">🌳 Made with Silsilah</footer>
+        <footer className="print-foot muted">{t("print.madeWith")}</footer>
       </div>
     </div>
   );

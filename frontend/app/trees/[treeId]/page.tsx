@@ -108,7 +108,7 @@ export default function TreePage() {
   }
 
   async function handleDeleteTree() {
-    if (!confirm(`Delete "${tree?.name}"? This cannot be undone.`)) return;
+    if (!confirm(t("tree.deleteConfirm", { name: tree?.name ?? "" }))) return;
     await api.deleteTree(treeId);
     router.push("/");
   }
@@ -194,18 +194,17 @@ export default function TreePage() {
             {tree && people.length === 0 && canEdit ? (
               <div className="onboarding">
                 <div className="empty-mark" style={{ fontSize: "3rem" }}>🌱</div>
-                <h2 style={{ margin: "0.25rem 0" }}>Let's plant your tree</h2>
+                <h2 style={{ margin: "0.25rem 0" }}>{t("tree.onboardTitle")}</h2>
                 <p className="muted" style={{ maxWidth: "34ch", margin: "0 auto 1rem" }}>
-                  The easiest way to start is with yourself. Then add your parents,
-                  and grow outward from there.
+                  {t("tree.onboardText")}
                 </p>
                 <button className="primary" onClick={() => setShowAddPerson(true)}>
-                  ✨ Start with yourself
+                  {t("tree.startSelf")}
                 </button>
                 <ol className="onboarding-steps">
-                  <li><strong>1.</strong> Add yourself</li>
-                  <li><strong>2.</strong> Select yourself, then <em>+ Parent</em> / <em>+ Spouse</em></li>
-                  <li><strong>3.</strong> Invite relatives to help fill it in</li>
+                  <li><strong>1.</strong> {t("tree.step1")}</li>
+                  <li><strong>2.</strong> {t("tree.step2")}</li>
+                  <li><strong>3.</strong> {t("tree.step3")}</li>
                 </ol>
               </div>
             ) : (
@@ -239,9 +238,7 @@ export default function TreePage() {
               <div className="card detail-empty">
                 <div className="empty-mark" style={{ fontSize: "2.2rem" }}>👆</div>
                 <p className="muted" style={{ margin: 0 }}>
-                  {people.length
-                    ? "Select a person on the tree to see their details and relatives."
-                    : "Add your first person to begin building this tree."}
+                  {people.length ? t("tree.selectEmpty") : t("tree.addFirstEmpty")}
                 </p>
               </div>
             )}
@@ -251,12 +248,12 @@ export default function TreePage() {
 
       {showAddPerson && (
         <Modal
-          title="Add a person"
-          subtitle="Only a name is required — connect them to others anytime."
+          title={t("tree.addPerson")}
+          subtitle={t("tree.addPersonSub")}
           onClose={() => setShowAddPerson(false)}
         >
           <PersonForm
-            submitLabel="Add person"
+            submitLabel={t("tree.addPerson")}
             onCancel={() => setShowAddPerson(false)}
             onSubmit={async (values) => {
               const created = await api.createPerson(treeId, {
@@ -274,8 +271,8 @@ export default function TreePage() {
 
       {showAddRel && (
         <Modal
-          title="Connect two people"
-          subtitle="Parent → child, or spouse. Direction matters for parent-child."
+          title={t("tree.connect")}
+          subtitle={t("tree.connectSub")}
           onClose={() => setShowAddRel(false)}
         >
           <RelationshipForm
@@ -293,8 +290,8 @@ export default function TreePage() {
 
       {showMembers && tree && (
         <Modal
-          title="Members & invites"
-          subtitle="Invite relatives as editors or viewers."
+          title={t("tree.members")}
+          subtitle={t("tree.membersSub")}
           onClose={() => setShowMembers(false)}
         >
           <MembersPanel treeId={treeId} />
@@ -303,8 +300,8 @@ export default function TreePage() {
 
       {showShare && tree && (
         <Modal
-          title="Share this tree"
-          subtitle="Create read-only links — for the whole tree or one branch."
+          title={t("tree.share")}
+          subtitle={t("tree.shareSub")}
           onClose={() => setShowShare(false)}
         >
           <ShareLinksPanel treeId={treeId} people={people} />
@@ -313,8 +310,8 @@ export default function TreePage() {
 
       {showPlaces && tree && (
         <Modal
-          title="Places & roots"
-          subtitle="Where your family has lived, married, and migrated."
+          title={t("tree.placesTitle")}
+          subtitle={t("tree.placesSub")}
           onClose={() => setShowPlaces(false)}
         >
           <PlacesPanel treeId={treeId} />
@@ -323,8 +320,8 @@ export default function TreePage() {
 
       {showData && tree && (
         <Modal
-          title="Import & export"
-          subtitle="Move this tree in or out with GEDCOM — the genealogy standard."
+          title={t("tree.dataTitle")}
+          subtitle={t("tree.dataSub")}
           onClose={() => setShowData(false)}
         >
           <DataPanel
@@ -339,8 +336,8 @@ export default function TreePage() {
 
       {addRelative && selected && (
         <Modal
-          title={`Add ${addRelative}`}
-          subtitle="Creates the person and connects them in one step."
+          title={t("addrel.addKind", { kind: t(`kind.${addRelative}`) })}
+          subtitle={t("tree.addPersonSub")}
           onClose={() => setAddRelative(null)}
         >
           <AddRelativeForm

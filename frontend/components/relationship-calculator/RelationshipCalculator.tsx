@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import type { Person } from "@/lib/types";
+import { useI18n } from "@/lib/i18n";
 
 interface Props {
   treeId: number;
@@ -11,6 +12,7 @@ interface Props {
 
 /** "How is X related to me?" — pick another person, get a kinship label. */
 export default function RelationshipCalculator({ treeId, person }: Props) {
+  const { t } = useI18n();
   const [people, setPeople] = useState<Person[]>([]);
   const [otherId, setOtherId] = useState<number | "">("");
   const [result, setResult] = useState<string | null>(null);
@@ -27,7 +29,7 @@ export default function RelationshipCalculator({ treeId, person }: Props) {
       const res = await api.getRelationship(treeId, person.id, id);
       setResult(res.sentence);
     } catch {
-      setResult("Couldn't work that out.");
+      setResult(t("relcalc.error"));
     } finally {
       setBusy(false);
     }
@@ -40,7 +42,7 @@ export default function RelationshipCalculator({ treeId, person }: Props) {
   return (
     <div>
       <p className="muted" style={{ marginTop: 0, fontSize: "0.88rem" }}>
-        See how anyone in the tree is related to <strong>{person.name}</strong>.
+        {t("relcalc.desc", { name: person.name })}
       </p>
       <select
         value={otherId}
@@ -50,14 +52,14 @@ export default function RelationshipCalculator({ treeId, person }: Props) {
           if (id) compute(id as number);
         }}
       >
-        <option value="">Choose a person…</option>
+        <option value="">{t("relcalc.choose")}</option>
         {options.map((p) => (
           <option key={p.id} value={p.id}>
             {p.name}
           </option>
         ))}
       </select>
-      {busy && <p className="muted" style={{ marginTop: "0.75rem" }}>Working it out…</p>}
+      {busy && <p className="muted" style={{ marginTop: "0.75rem" }}>{t("relcalc.working")}</p>}
       {result && !busy && (
         <div className="rel-result animate-in">
           <span className="rel-result-icon">🧬</span>

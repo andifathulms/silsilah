@@ -3,18 +3,19 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import type { LifeEvent, LifeEventType, Person } from "@/lib/types";
+import { useI18n } from "@/lib/i18n";
 
-const EVENT_META: Record<LifeEventType, { icon: string; label: string }> = {
-  birth: { icon: "👶", label: "Birth" },
-  marriage: { icon: "💍", label: "Marriage" },
-  death: { icon: "🕊", label: "Death" },
-  education: { icon: "🎓", label: "Education" },
-  career: { icon: "💼", label: "Career" },
-  residence: { icon: "🏠", label: "Residence" },
-  immigration: { icon: "✈️", label: "Migration" },
-  military: { icon: "🎖", label: "Military" },
-  religious: { icon: "🕌", label: "Religious" },
-  other: { icon: "⭐", label: "Event" },
+const EVENT_ICON: Record<LifeEventType, string> = {
+  birth: "👶",
+  marriage: "💍",
+  death: "🕊",
+  education: "🎓",
+  career: "💼",
+  residence: "🏠",
+  immigration: "✈️",
+  military: "🎖",
+  religious: "🕌",
+  other: "⭐",
 };
 
 interface Props {
@@ -29,6 +30,7 @@ interface Props {
  * fields, plus any custom LifeEvents — all sorted chronologically.
  */
 export default function LifeTimeline({ treeId, person, canEdit, redacted }: Props) {
+  const { t } = useI18n();
   const [events, setEvents] = useState<LifeEvent[]>([]);
   const [adding, setAdding] = useState(false);
 
@@ -49,24 +51,24 @@ export default function LifeTimeline({ treeId, person, canEdit, redacted }: Prop
   type Row = { key: string; icon: string; label: string; date: string | null; place?: string; description?: string; id?: number };
   const rows: Row[] = [];
   if (person.birth_date)
-    rows.push({ key: "b", icon: "👶", label: "Born", date: person.birth_date });
+    rows.push({ key: "b", icon: "👶", label: t("timeline.born"), date: person.birth_date });
   for (const e of events)
     rows.push({
       key: `e${e.id}`,
-      icon: EVENT_META[e.type].icon,
-      label: e.title || e.type_display,
+      icon: EVENT_ICON[e.type],
+      label: e.title || t(`event.${e.type}`),
       date: e.date,
       place: e.place,
       description: e.description,
       id: e.id,
     });
   if (person.death_date)
-    rows.push({ key: "d", icon: "🕊", label: "Died", date: person.death_date });
+    rows.push({ key: "d", icon: "🕊", label: t("timeline.died"), date: person.death_date });
 
   rows.sort((a, b) => (a.date ?? "9999").localeCompare(b.date ?? "9999"));
 
   async function remove(id: number) {
-    if (!confirm("Delete this event?")) return;
+    if (!confirm(t("timeline.deleteConfirm"))) return;
     await api.deleteEvent(treeId, person.id, id);
     await load();
   }
@@ -74,13 +76,11 @@ export default function LifeTimeline({ treeId, person, canEdit, redacted }: Prop
   return (
     <div>
       {redacted && (
-        <p className="muted" style={{ fontSize: "0.85rem" }}>
-          🔒 Timeline is hidden for living people at your access level.
-        </p>
+        <p className="muted" style={{ fontSize: "0.85rem" }}>{t("timeline.privacyHidden")}</p>
       )}
 
       {rows.length === 0 ? (
-        <p className="muted" style={{ margin: 0 }}>No life events recorded yet.</p>
+        <p className="muted" style={{ margin: 0 }}>{t("timeline.none")}</p>
       ) : (
         <div className="lifeline">
           {rows.map((r) => (
@@ -116,7 +116,7 @@ export default function LifeTimeline({ treeId, person, canEdit, redacted }: Prop
           />
         ) : (
           <button style={{ marginTop: "0.85rem" }} onClick={() => setAdding(true)}>
-            ＋ Add life event
+            {t("timeline.add")}
           </button>
         )
       )}
@@ -131,6 +131,7 @@ function EventForm({
   onSave: (body: Partial<LifeEvent>) => Promise<void>;
   onCancel: () => void;
 }) {
+  const { t } = useI18n();
   const [type, setType] = useState<LifeEventType>("residence");
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
@@ -149,24 +150,24 @@ function EventForm({
     <form onSubmit={submit} className="upload-box" style={{ marginTop: "0.85rem" }}>
       <div className="row wrap" style={{ gap: "0.5rem" }}>
         <select value={type} onChange={(e) => setType(e.target.value as LifeEventType)} style={{ width: "auto" }}>
-          {Object.entries(EVENT_META).map(([k, v]) => (
-            <option key={k} value={k}>{v.icon} {v.label}</option>
+          {(Object.keys(EVENT_ICON) as LifeEventType[]).map((k) => (
+            <option key={k} value={k}>{EVENT_ICON[k]} {t(`event.${k}`)}</option>
           ))}
         </select>
         <input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={{ width: "auto" }} />
       </div>
       <div className="field" style={{ marginTop: "0.5rem" }}>
-        <input placeholder="Title (e.g. Graduated university)" value={title} onChange={(e) => setTitle(e.target.value)} />
+        <input placeholder={t("timeline.titlePh")} value={title} onChange={(e) => setTitle(e.target.value)} />
       </div>
       <div className="field">
-        <input placeholder="Place (e.g. Jakarta, Indonesia)" value={place} onChange={(e) => setPlace(e.target.value)} />
+        <input placeholder={t("timeline.placePh")} value={place} onChange={(e) => setPlace(e.target.value)} />
       </div>
       <div className="field">
-        <textarea rows={2} placeholder="Notes (optional)" value={description} onChange={(e) => setDescription(e.target.value)} />
+        <textarea rows={2} placeholder={t("timeline.notesPh")} value={description} onChange={(e) => setDescription(e.target.value)} />
       </div>
       <div className="row">
-        <button className="primary" type="submit" disabled={busy}>{busy ? "Saving…" : "Add event"}</button>
-        <button type="button" onClick={onCancel}>Cancel</button>
+        <button className="primary" type="submit" disabled={busy}>{busy ? t("common.saving") : t("timeline.addEvent")}</button>
+        <button type="button" onClick={onCancel}>{t("common.cancel")}</button>
       </div>
     </form>
   );

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { api } from "@/lib/api";
 import type { Person, Relatives } from "@/lib/types";
 import PersonForm from "@/components/person-form/PersonForm";
+import { useI18n } from "@/lib/i18n";
 
 export type RelativeKind = "parent" | "child" | "spouse" | "sibling";
 
@@ -16,13 +17,6 @@ interface Props {
   onCancel: () => void;
 }
 
-const LABELS: Record<RelativeKind, string> = {
-  parent: "parent",
-  child: "child",
-  spouse: "spouse",
-  sibling: "sibling",
-};
-
 /**
  * Add a relative in one flow — either creating a NEW person or LINKING an
  * existing one — always with correct edges:
@@ -31,6 +25,8 @@ const LABELS: Record<RelativeKind, string> = {
  *  - parent/spouse → single edge
  */
 export default function AddRelativeForm({ treeId, anchor, kind, people, onDone, onCancel }: Props) {
+  const { t } = useI18n();
+  const kindLabel = t(`kind.${kind}`);
   const [mode, setMode] = useState<"new" | "existing">("new");
   const [relatives, setRelatives] = useState<Relatives | null>(null);
   const [coParentIds, setCoParentIds] = useState<Set<number>>(new Set());
@@ -113,7 +109,7 @@ export default function AddRelativeForm({ treeId, anchor, kind, people, onDone, 
   async function handleExisting(e: React.FormEvent) {
     e.preventDefault();
     if (existingId === "") {
-      setError("Pick a person to link.");
+      setError(t("addrel.pickToLink"));
       return;
     }
     setBusy(true);
@@ -122,7 +118,7 @@ export default function AddRelativeForm({ treeId, anchor, kind, people, onDone, 
       await applyLinks(Number(existingId));
       onDone(Number(existingId));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't create that link.");
+      setError(err instanceof Error ? err.message : t("addrel.linkError"));
       setBusy(false);
     }
   }
@@ -130,21 +126,21 @@ export default function AddRelativeForm({ treeId, anchor, kind, people, onDone, 
   return (
     <div>
       <p className="muted" style={{ marginTop: 0, fontSize: "0.88rem" }}>
-        Adding a <strong>{LABELS[kind]}</strong> of <strong>{anchor.name}</strong>.
+        {t("addrel.addingA")} <strong>{kindLabel}</strong> {t("addrel.of")} <strong>{anchor.name}</strong>.
       </p>
 
       <div className="segmented" style={{ margin: "0 0 1rem" }}>
         <button type="button" className={mode === "new" ? "active" : ""} onClick={() => setMode("new")}>
-          ➕ New person
+          {t("addrel.newPerson")}
         </button>
         <button type="button" className={mode === "existing" ? "active" : ""} onClick={() => setMode("existing")}>
-          🔗 Existing person
+          {t("addrel.existingPerson")}
         </button>
       </div>
 
       {kind === "child" && (relatives?.spouses.length ?? 0) > 0 && (
         <div className="coparent-box">
-          <div className="rel-label" style={{ marginBottom: "0.4rem" }}>Also a child of</div>
+          <div className="rel-label" style={{ marginBottom: "0.4rem" }}>{t("addrel.alsoChildOf")}</div>
           {relatives!.spouses.map((s) => (
             <label key={s.id} className="check" style={{ marginBottom: "0.3rem" }}>
               <input type="checkbox" checked={coParentIds.has(s.id)} onChange={() => toggleCoParent(s.id)} />
@@ -158,42 +154,39 @@ export default function AddRelativeForm({ treeId, anchor, kind, people, onDone, 
         <div className="coparent-box">
           {relatives.parents.length > 0 ? (
             <span className="muted" style={{ fontSize: "0.85rem" }}>
-              Will share the parent{relatives.parents.length > 1 ? "s" : ""}:{" "}
+              {relatives.parents.length > 1 ? t("addrel.willShare") : t("addrel.willShareOne")}{" "}
               <strong>{relatives.parents.map((p) => p.name).join(" & ")}</strong>.
             </span>
           ) : (
             <span className="muted" style={{ fontSize: "0.85rem" }}>
-              ⚠️ {anchor.name} has no parents recorded yet, so this sibling won't be
-              connected. Add a parent to {anchor.name} first.
+              {t("addrel.noParents", { name: anchor.name })}
             </span>
           )}
         </div>
       )}
 
       {mode === "new" ? (
-        <PersonForm submitLabel={`Add ${LABELS[kind]}`} onSubmit={handleNew} onCancel={onCancel} />
+        <PersonForm submitLabel={t("addrel.addKind", { kind: kindLabel })} onSubmit={handleNew} onCancel={onCancel} />
       ) : (
         <form onSubmit={handleExisting}>
           <div className="field">
-            <label>Choose someone already in the tree</label>
+            <label>{t("addrel.chooseExisting")}</label>
             <select value={existingId} onChange={(e) => setExistingId(e.target.value ? Number(e.target.value) : "")}>
-              <option value="">Select a person…</option>
+              <option value="">{t("addrel.selectPerson")}</option>
               {candidates.map((p) => (
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
             </select>
             {candidates.length === 0 && (
-              <p className="muted" style={{ fontSize: "0.82rem" }}>
-                No eligible people — everyone is already linked or is this person.
-              </p>
+              <p className="muted" style={{ fontSize: "0.82rem" }}>{t("addrel.noEligible")}</p>
             )}
           </div>
           {error && <div className="error">{error}</div>}
           <div className="row">
             <button className="primary" type="submit" disabled={busy || existingId === ""}>
-              {busy ? "Linking…" : `Link as ${LABELS[kind]}`}
+              {busy ? t("addrel.linking") : t("addrel.linkAs", { kind: kindLabel })}
             </button>
-            <button type="button" onClick={onCancel}>Cancel</button>
+            <button type="button" onClick={onCancel}>{t("common.cancel")}</button>
           </div>
         </form>
       )}

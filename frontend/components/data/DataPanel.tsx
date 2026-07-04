@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { api, downloadGedcom } from "@/lib/api";
+import { useI18n } from "@/lib/i18n";
 
 interface Props {
   treeId: number;
@@ -11,6 +12,7 @@ interface Props {
 
 /** GEDCOM import/export — move a tree in or out of Silsilah. */
 export default function DataPanel({ treeId, treeName, onImported }: Props) {
+  const { t } = useI18n();
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -29,7 +31,7 @@ export default function DataPanel({ treeId, treeName, onImported }: Props) {
     e.preventDefault();
     const file = fileRef.current?.files?.[0];
     if (!file) {
-      setError("Choose a .ged file first.");
+      setError(t("data.chooseFile"));
       return;
     }
     setBusy(true);
@@ -38,9 +40,11 @@ export default function DataPanel({ treeId, treeName, onImported }: Props) {
     try {
       const res = await api.importGedcom(treeId, file);
       setMsg(
-        `Imported ${res.people_imported} people and ${res.relationships_imported} relationships` +
-          (res.skipped ? ` (${res.skipped} skipped)` : "") +
-          "."
+        t("data.imported", {
+          p: res.people_imported,
+          r: res.relationships_imported,
+          skipped: res.skipped ? t("data.skipped", { n: res.skipped }) : "",
+        })
       );
       if (fileRef.current) fileRef.current.value = "";
       onImported();
@@ -53,24 +57,18 @@ export default function DataPanel({ treeId, treeName, onImported }: Props) {
 
   return (
     <div>
-      <h4 style={{ marginTop: 0 }}>⬇ Export</h4>
-      <p className="muted" style={{ fontSize: "0.88rem", marginTop: 0 }}>
-        Download this tree as a standard <strong>GEDCOM</strong> (.ged) file — works
-        with Ancestry, FamilySearch, Gramps, and more.
-      </p>
-      <button className="primary" onClick={exportGed}>Download GEDCOM</button>
+      <h4 style={{ marginTop: 0 }}>{t("data.export")}</h4>
+      <p className="muted" style={{ fontSize: "0.88rem", marginTop: 0 }}>{t("data.exportDesc")}</p>
+      <button className="primary" onClick={exportGed}>{t("data.downloadGedcom")}</button>
 
       <div className="divider" />
 
-      <h4 style={{ marginTop: 0 }}>⬆ Import</h4>
-      <p className="muted" style={{ fontSize: "0.88rem", marginTop: 0 }}>
-        Add people and relationships from a GEDCOM file into this tree. Existing
-        people are kept — imported records are appended.
-      </p>
+      <h4 style={{ marginTop: 0 }}>{t("data.import")}</h4>
+      <p className="muted" style={{ fontSize: "0.88rem", marginTop: 0 }}>{t("data.importDesc")}</p>
       <form onSubmit={importGed}>
         <input ref={fileRef} type="file" accept=".ged,text/plain" />
         <button className="primary" type="submit" disabled={busy} style={{ marginTop: "0.6rem" }}>
-          {busy ? "Importing…" : "Import GEDCOM"}
+          {busy ? t("data.importing") : t("data.importBtn")}
         </button>
       </form>
 

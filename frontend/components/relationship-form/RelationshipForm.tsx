@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Person, RelationshipType } from "@/lib/types";
+import { useI18n } from "@/lib/i18n";
 
 interface Props {
   people: Person[];
@@ -29,6 +30,7 @@ export default function RelationshipForm({
   onSubmit,
   onCancel,
 }: Props) {
+  const { t } = useI18n();
   const [type, setType] = useState<RelationshipType>("parent_child");
   const [personA, setPersonA] = useState<number | "">(anchorId ?? "");
   const [personB, setPersonB] = useState<number | "">("");
@@ -43,11 +45,11 @@ export default function RelationshipForm({
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (personA === "" || personB === "") {
-      setError("Pick both people.");
+      setError(t("relform.pickBoth"));
       return;
     }
     if (personA === personB) {
-      setError("A person cannot relate to themselves.");
+      setError(t("relform.selfError"));
       return;
     }
     setBusy(true);
@@ -68,19 +70,19 @@ export default function RelationshipForm({
     }
   }
 
-  const labelA = type === "parent_child" ? "Parent" : "Person 1";
-  const labelB = type === "parent_child" ? "Child" : "Person 2";
+  const labelA = type === "parent_child" ? t("relform.parent") : t("relform.person1");
+  const labelB = type === "parent_child" ? t("relform.child") : t("relform.person2");
 
   return (
     <form onSubmit={submit}>
       <div className="field">
-        <label>Relationship type</label>
+        <label>{t("relform.type")}</label>
         <select
           value={type}
           onChange={(e) => setType(e.target.value as RelationshipType)}
         >
-          <option value="parent_child">Parent → Child</option>
-          <option value="spouse">Spouse</option>
+          <option value="parent_child">{t("relform.parentChild")}</option>
+          <option value="spouse">{t("relform.spouse")}</option>
         </select>
       </div>
       <div className="field">
@@ -89,7 +91,7 @@ export default function RelationshipForm({
           value={personA}
           onChange={(e) => setPersonA(e.target.value ? Number(e.target.value) : "")}
         >
-          <option value="">Select…</option>
+          <option value="">{t("relform.select")}</option>
           {sorted.map((p) => (
             <option key={p.id} value={p.id}>
               {p.name}
@@ -103,7 +105,7 @@ export default function RelationshipForm({
           value={personB}
           onChange={(e) => setPersonB(e.target.value ? Number(e.target.value) : "")}
         >
-          <option value="">Select…</option>
+          <option value="">{t("relform.select")}</option>
           {sorted.map((p) => (
             <option key={p.id} value={p.id}>
               {p.name}
@@ -120,7 +122,7 @@ export default function RelationshipForm({
               checked={isBiological}
               onChange={(e) => setIsBiological(e.target.checked)}
             />
-            Biological (uncheck for adopted)
+            {t("relform.biological")}
           </label>
         </div>
       )}
@@ -128,7 +130,7 @@ export default function RelationshipForm({
       {type === "spouse" && (
         <div className="row">
           <div className="field" style={{ flex: 1 }}>
-            <label>Married</label>
+            <label>{t("relform.married")}</label>
             <input
               type="date"
               value={startDate}
@@ -136,7 +138,7 @@ export default function RelationshipForm({
             />
           </div>
           <div className="field" style={{ flex: 1 }}>
-            <label>Ended (divorce/death)</label>
+            <label>{t("relform.ended")}</label>
             <input
               type="date"
               value={endDate}
@@ -149,11 +151,11 @@ export default function RelationshipForm({
       {error && <div className="error">{error}</div>}
       <div className="row">
         <button className="primary" type="submit" disabled={busy}>
-          {busy ? "Saving…" : "Add relationship"}
+          {busy ? t("common.saving") : t("relform.add")}
         </button>
         {onCancel && (
           <button type="button" onClick={onCancel}>
-            Cancel
+            {t("common.cancel")}
           </button>
         )}
       </div>

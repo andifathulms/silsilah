@@ -5,10 +5,12 @@ import { useParams, useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { isAuthenticated } from "@/lib/auth";
 import type { InvitePreview } from "@/lib/types";
+import { useI18n } from "@/lib/i18n";
 
 export default function JoinPage() {
   const params = useParams();
   const router = useRouter();
+  const { t } = useI18n();
   const token = String(params.token);
 
   const [preview, setPreview] = useState<InvitePreview | null>(null);
@@ -19,7 +21,8 @@ export default function JoinPage() {
     api
       .previewInvitation(token)
       .then(setPreview)
-      .catch(() => setError("This invite link is invalid or has expired."));
+      .catch(() => setError(t("join.invalid")));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   async function accept() {
@@ -36,7 +39,7 @@ export default function JoinPage() {
       const res = await api.acceptInvitation(token);
       router.push(`/trees/${res.tree}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not accept invite");
+      setError(err instanceof Error ? err.message : t("join.error"));
       setBusy(false);
     }
   }
@@ -47,27 +50,27 @@ export default function JoinPage() {
         <div className="empty-mark" style={{ fontSize: "2.6rem" }}>🌳</div>
         {error ? (
           <>
-            <h2>Invite unavailable</h2>
+            <h2>{t("join.unavailable")}</h2>
             <p className="muted">{error}</p>
-            <a href="/"><button>Go home</button></a>
+            <a href="/"><button>{t("join.goHome")}</button></a>
           </>
         ) : !preview ? (
-          <p className="muted">Loading invite…</p>
+          <p className="muted">{t("join.loading")}</p>
         ) : (
           <>
-            <div className="eyebrow">You're invited</div>
+            <div className="eyebrow">{t("join.invited")}</div>
             <h2 style={{ margin: "0.3rem 0" }}>{preview.tree.name}</h2>
             <p className="muted">
-              {preview.invited_by ? `${preview.invited_by} invited you` : "You've been invited"} to
-              join as <strong>{preview.role}</strong>.
+              {preview.invited_by ? t("join.invitedBy", { who: preview.invited_by }) : t("join.invitedGeneric")}{" "}
+              {t("join.toJoinAs")} <strong>{preview.role}</strong>.
             </p>
             {preview.already_member ? (
               <a href={`/trees/${preview.tree.id}`}>
-                <button className="primary" style={{ width: "100%" }}>Open tree →</button>
+                <button className="primary" style={{ width: "100%" }}>{t("join.openTree")}</button>
               </a>
             ) : (
               <button className="primary" onClick={accept} disabled={busy} style={{ width: "100%" }}>
-                {busy ? "Joining…" : isAuthenticated() ? "Accept & join" : "Sign in to join"}
+                {busy ? t("join.joining") : isAuthenticated() ? t("join.acceptJoin") : t("join.signInJoin")}
               </button>
             )}
           </>

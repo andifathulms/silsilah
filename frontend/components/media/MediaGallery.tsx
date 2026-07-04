@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { api, mediaUrl } from "@/lib/api";
 import type { MediaItem } from "@/lib/types";
+import { useI18n } from "@/lib/i18n";
 
 interface Props {
   treeId: number;
@@ -23,6 +24,7 @@ export default function MediaGallery({
   canEdit,
   redacted,
 }: Props) {
+  const { t } = useI18n();
   const [items, setItems] = useState<MediaItem[]>([]);
   const [caption, setCaption] = useState("");
   const [eventDate, setEventDate] = useState("");
@@ -47,7 +49,7 @@ export default function MediaGallery({
     e.preventDefault();
     const file = fileRef.current?.files?.[0];
     if (!file) {
-      setError("Choose an image file first.");
+      setError(t("media.chooseFirst"));
       return;
     }
     setBusy(true);
@@ -66,7 +68,7 @@ export default function MediaGallery({
   }
 
   async function remove(id: number) {
-    if (!confirm("Delete this photo?")) return;
+    if (!confirm(t("media.deleteConfirm"))) return;
     await api.deleteMedia(treeId, personId, id);
     await load();
   }
@@ -74,14 +76,12 @@ export default function MediaGallery({
   return (
     <div>
       {redacted && (
-        <p className="muted" style={{ fontSize: "0.85rem" }}>
-          🔒 Photos are hidden for living people at your access level.
-        </p>
+        <p className="muted" style={{ fontSize: "0.85rem" }}>{t("media.privacyHidden")}</p>
       )}
 
       {items.length === 0 ? (
         <p className="muted" style={{ margin: redacted ? "0" : "0 0 0.5rem" }}>
-          No photos yet.{canEdit ? " Add one below to start the album." : ""}
+          {t("media.none")}{canEdit ? t("media.addStart") : ""}
         </p>
       ) : (
         <div className="media-grid">
@@ -107,11 +107,11 @@ export default function MediaGallery({
 
       {canEdit && (
         <form onSubmit={upload} className="upload-box">
-          <label>Add a photo (optional caption + life-event date)</label>
+          <label>{t("media.addPhoto")}</label>
           <input ref={fileRef} type="file" accept="image/*" />
           <div className="row wrap" style={{ marginTop: "0.5rem" }}>
             <input
-              placeholder="Caption, e.g. Wedding 1962"
+              placeholder={t("media.captionPh")}
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
             />
@@ -122,7 +122,7 @@ export default function MediaGallery({
               style={{ width: "auto" }}
             />
             <button className="primary" type="submit" disabled={busy}>
-              {busy ? "…" : "Upload"}
+              {busy ? "…" : t("media.upload")}
             </button>
           </div>
           {error && <div className="error">{error}</div>}

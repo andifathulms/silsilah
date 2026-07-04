@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import type { Invitation, Membership } from "@/lib/types";
+import { useI18n } from "@/lib/i18n";
 
 function inviteUrl(token: string): string {
   if (typeof window === "undefined") return `/join/${token}`;
@@ -10,6 +11,7 @@ function inviteUrl(token: string): string {
 }
 
 export default function MembersPanel({ treeId }: { treeId: number }) {
+  const { t } = useI18n();
   const [members, setMembers] = useState<Membership[]>([]);
   const [invites, setInvites] = useState<Invitation[]>([]);
   const [email, setEmail] = useState("");
@@ -100,30 +102,32 @@ export default function MembersPanel({ treeId }: { treeId: number }) {
       <div className="divider" />
 
       {/* Invite by shareable link — no account needed up front */}
-      <label>Invite with a link</label>
+      <label>{t("members.inviteLink")}</label>
       <div className="row" style={{ marginBottom: invites.length ? "0.75rem" : 0 }}>
         <select
           value={linkRole}
           onChange={(e) => setLinkRole(e.target.value as "editor" | "viewer")}
           style={{ width: "auto" }}
         >
-          <option value="viewer">Viewer</option>
-          <option value="editor">Editor</option>
+          <option value="viewer">{t("members.viewer")}</option>
+          <option value="editor">{t("members.editor")}</option>
         </select>
         <button className="primary" type="button" onClick={makeLink}>
-          🔗 Generate invite link
+          {t("members.generateLink")}
         </button>
       </div>
 
       {invites.map((inv) => (
         <div key={inv.id} className="share-link-row">
           <div className="row spread wrap" style={{ gap: "0.5rem" }}>
-            <span className={`badge ${inv.role === "editor" ? "forest" : ""}`}>{inv.role} invite</span>
+            <span className={`badge ${inv.role === "editor" ? "forest" : ""}`}>
+              {t("members.roleInvite", { role: inv.role === "editor" ? t("members.editor") : t("members.viewer") })}
+            </span>
             <span className="row" style={{ gap: "0.4rem" }}>
               <button className="sm" onClick={() => copyLink(inv)}>
-                {copied === inv.id ? "✓ Copied" : "Copy link"}
+                {copied === inv.id ? t("members.copied") : t("members.copyLink")}
               </button>
-              <button className="danger sm" onClick={() => revokeLink(inv.id)}>Revoke</button>
+              <button className="danger sm" onClick={() => revokeLink(inv.id)}>{t("members.revoke")}</button>
             </span>
           </div>
           <code className="share-link-url">{inviteUrl(inv.token)}</code>
@@ -133,7 +137,7 @@ export default function MembersPanel({ treeId }: { treeId: number }) {
       <div className="divider" />
 
       <form onSubmit={invite}>
-        <label>Or invite an existing member by email</label>
+        <label>{t("members.inviteEmail")}</label>
         <div className="row">
           <input
             type="email"
@@ -147,11 +151,11 @@ export default function MembersPanel({ treeId }: { treeId: number }) {
             onChange={(e) => setRole(e.target.value as "editor" | "viewer")}
             style={{ width: "auto" }}
           >
-            <option value="viewer">Viewer</option>
-            <option value="editor">Editor</option>
+            <option value="viewer">{t("members.viewer")}</option>
+            <option value="editor">{t("members.editor")}</option>
           </select>
           <button className="primary" type="submit" disabled={busy}>
-            Invite
+            {t("members.invite")}
           </button>
         </div>
         {error && <div className="error">{error}</div>}

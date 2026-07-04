@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import type { Person, ShareLink } from "@/lib/types";
+import { useI18n } from "@/lib/i18n";
 
 interface Props {
   treeId: number;
@@ -20,6 +21,7 @@ function publicUrl(token: string): string {
  * visitors see Viewer-level privacy.
  */
 export default function ShareLinksPanel({ treeId, people }: Props) {
+  const { t } = useI18n();
   const [links, setLinks] = useState<ShareLink[]>([]);
   const [scope, setScope] = useState<"whole_tree" | "branch">("whole_tree");
   const [rootPerson, setRootPerson] = useState<number | "">("");
@@ -44,7 +46,7 @@ export default function ShareLinksPanel({ treeId, people }: Props) {
     e.preventDefault();
     setError(null);
     if (scope === "branch" && rootPerson === "") {
-      setError("Pick a person to root the branch on.");
+      setError(t("share.pickRoot"));
       return;
     }
     try {
@@ -81,7 +83,7 @@ export default function ShareLinksPanel({ treeId, people }: Props) {
   return (
     <div>
       {links.length === 0 ? (
-        <p className="muted">No active share links.</p>
+        <p className="muted">{t("share.noLinks")}</p>
       ) : (
         <div style={{ marginBottom: "1rem" }}>
           {links.map((l) => (
@@ -89,21 +91,21 @@ export default function ShareLinksPanel({ treeId, people }: Props) {
               <div className="row spread wrap" style={{ gap: "0.5rem" }}>
                 <span className="row" style={{ gap: "0.4rem" }}>
                   <span className={`badge ${l.scope === "branch" ? "" : "forest"}`}>
-                    {l.scope === "branch" ? "🌿 branch" : "🌳 whole tree"}
+                    {l.scope === "branch" ? t("share.branchBadge") : t("share.wholeTreeBadge")}
                   </span>
                   {l.root_person_name && (
                     <span className="muted" style={{ fontSize: "0.85rem" }}>
                       {l.root_person_name}
-                      {l.include_ancestors ? " + ancestors" : ""}
+                      {l.include_ancestors ? " + " + t("panel.grandparents").toLowerCase() : ""}
                     </span>
                   )}
                 </span>
                 <span className="row" style={{ gap: "0.4rem" }}>
                   <button className="sm" onClick={() => copy(l)}>
-                    {copied === l.id ? "✓ Copied" : "Copy link"}
+                    {copied === l.id ? t("members.copied") : t("members.copyLink")}
                   </button>
                   <button className="danger sm" onClick={() => remove(l.id)}>
-                    Revoke
+                    {t("members.revoke")}
                   </button>
                 </span>
               </div>
@@ -114,22 +116,22 @@ export default function ShareLinksPanel({ treeId, people }: Props) {
       )}
 
       <form onSubmit={create}>
-        <label>Create a read-only public link</label>
+        <label>{t("share.create")}</label>
         <div className="field">
           <select value={scope} onChange={(e) => setScope(e.target.value as typeof scope)}>
-            <option value="whole_tree">Whole tree</option>
-            <option value="branch">Single branch</option>
+            <option value="whole_tree">{t("share.wholeTree")}</option>
+            <option value="branch">{t("share.branch")}</option>
           </select>
         </div>
         {scope === "branch" && (
           <>
             <div className="field">
-              <label>Root person (branch = this person + descendants)</label>
+              <label>{t("share.rootPerson")}</label>
               <select
                 value={rootPerson}
                 onChange={(e) => setRootPerson(e.target.value ? Number(e.target.value) : "")}
               >
-                <option value="">Select…</option>
+                <option value="">{t("share.select")}</option>
                 {sorted.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.name}
@@ -144,14 +146,14 @@ export default function ShareLinksPanel({ treeId, people }: Props) {
                   checked={includeAncestors}
                   onChange={(e) => setIncludeAncestors(e.target.checked)}
                 />
-                Also include ancestors
+                {t("share.includeAncestors")}
               </label>
             </div>
           </>
         )}
         {error && <div className="error">{error}</div>}
         <button className="primary" type="submit">
-          Create link
+          {t("share.createLink")}
         </button>
       </form>
     </div>

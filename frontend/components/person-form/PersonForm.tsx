@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Person } from "@/lib/types";
+import { useI18n } from "@/lib/i18n";
 
 export interface PersonFormValues {
   name: string;
@@ -23,8 +24,9 @@ export default function PersonForm({
   initial,
   onSubmit,
   onCancel,
-  submitLabel = "Save",
+  submitLabel,
 }: Props) {
+  const { t } = useI18n();
   const [values, setValues] = useState<PersonFormValues>({
     name: initial?.name ?? "",
     gender: initial?.gender ?? "",
@@ -59,7 +61,7 @@ export default function PersonForm({
   return (
     <form onSubmit={submit}>
       <div className="field">
-        <label>Name *</label>
+        <label>{t("form.name")}</label>
         <input
           value={values.name}
           onChange={(e) => set("name", e.target.value)}
@@ -69,15 +71,15 @@ export default function PersonForm({
       </div>
       <div className="row">
         <div className="field" style={{ flex: 1 }}>
-          <label>Gender</label>
+          <label>{t("form.gender")}</label>
           <select
             value={values.gender}
             onChange={(e) => set("gender", e.target.value)}
           >
-            <option value="">Unspecified</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-            <option value="other">Other</option>
+            <option value="">{t("gender.unspecified")}</option>
+            <option value="male">{t("gender.male")}</option>
+            <option value="female">{t("gender.female")}</option>
+            <option value="other">{t("gender.other")}</option>
           </select>
         </div>
         <div className="field" style={{ flex: 1, display: "flex", alignItems: "flex-end" }}>
@@ -87,13 +89,13 @@ export default function PersonForm({
               checked={values.is_living}
               onChange={(e) => set("is_living", e.target.checked)}
             />
-            Living
+            {t("form.living")}
           </label>
         </div>
       </div>
       <div className="row">
         <div className="field" style={{ flex: 1 }}>
-          <label>Birth date</label>
+          <label>{t("form.birthDate")}</label>
           <input
             type="date"
             value={values.birth_date ?? ""}
@@ -101,7 +103,7 @@ export default function PersonForm({
           />
         </div>
         <div className="field" style={{ flex: 1 }}>
-          <label>Death date</label>
+          <label>{t("form.deathDate")}</label>
           <input
             type="date"
             value={values.death_date ?? ""}
@@ -111,7 +113,7 @@ export default function PersonForm({
         </div>
       </div>
       <div className="field">
-        <label>Notes</label>
+        <label>{t("form.notes")}</label>
         <textarea
           rows={3}
           value={values.notes}
@@ -121,11 +123,11 @@ export default function PersonForm({
       {error && <div className="error">{error}</div>}
       <div className="row">
         <button className="primary" type="submit" disabled={busy}>
-          {busy ? "Saving…" : submitLabel}
+          {busy ? t("common.saving") : submitLabel ?? t("common.save")}
         </button>
         {onCancel && (
           <button type="button" onClick={onCancel}>
-            Cancel
+            {t("common.cancel")}
           </button>
         )}
       </div>

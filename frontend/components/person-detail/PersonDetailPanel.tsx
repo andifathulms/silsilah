@@ -4,6 +4,15 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api, mediaUrl } from "@/lib/api";
 import type { Person, Relatives } from "@/lib/types";
+import { useI18n } from "@/lib/i18n";
+
+export function genderLabel(t: (k: string) => string, gender: string): string {
+  const g = (gender || "").toLowerCase();
+  if (g.startsWith("m")) return t("gender.male");
+  if (g.startsWith("f") || g.startsWith("w")) return t("gender.female");
+  if (g) return t("gender.other");
+  return "";
+}
 
 interface Props {
   treeId: number;
@@ -40,6 +49,7 @@ export default function PersonDetailPanel({
   onRecenter,
   onAddRelative,
 }: Props) {
+  const { t } = useI18n();
   const [relatives, setRelatives] = useState<Relatives | null>(null);
 
   useEffect(() => {
@@ -62,7 +72,7 @@ export default function PersonDetailPanel({
         <div style={{ minWidth: 0 }}>
           <h3 className="detail-name">{person.name}</h3>
           <div className="detail-sub">
-            {person.gender && <span>{titleCase(person.gender)}</span>}
+            {person.gender && <span>{genderLabel(t, person.gender)}</span>}
             {person.gender && hasLifespan && <span> · </span>}
             {hasLifespan && (
               <span>
@@ -76,42 +86,40 @@ export default function PersonDetailPanel({
 
       <div className="row wrap" style={{ gap: "0.4rem", marginBottom: "0.85rem" }}>
         <span className={`badge ${person.is_living ? "forest" : ""}`}>
-          {person.is_living ? "● Living" : "In memory"}
+          {person.is_living ? `● ${t("person.living")}` : t("person.inMemory")}
         </span>
-        {person._private_redacted && <span className="badge">🔒 Private</span>}
+        {person._private_redacted && <span className="badge">{t("panel.private")}</span>}
       </div>
 
       {person._private_redacted && (
         <p className="muted" style={{ fontSize: "0.82rem", marginTop: 0 }}>
-          Some details are hidden for living relatives at your access level.
+          {t("panel.privacyNote")}
         </p>
       )}
 
       {relatives ? (
         <div className="rel-list">
-          <RelativeRow label="Parents" people={relatives.parents} />
-          <RelativeRow label="Spouses" people={relatives.spouses} />
-          <RelativeRow label="Children" people={relatives.children} />
-          <RelativeRow label="Full siblings" people={relatives.siblings_full} />
-          <RelativeRow label="Half siblings" people={relatives.siblings_half} />
-          <RelativeRow label="Grandparents" people={relatives.grandparents} />
+          <RelativeRow label={t("panel.parents")} people={relatives.parents} />
+          <RelativeRow label={t("panel.spouses")} people={relatives.spouses} />
+          <RelativeRow label={t("panel.children")} people={relatives.children} />
+          <RelativeRow label={t("panel.fullSiblings")} people={relatives.siblings_full} />
+          <RelativeRow label={t("panel.halfSiblings")} people={relatives.siblings_half} />
+          <RelativeRow label={t("panel.grandparents")} people={relatives.grandparents} />
           {isEmpty(relatives) && (
-            <p className="muted" style={{ fontSize: "0.85rem" }}>
-              No relationships yet — connect this person to others.
-            </p>
+            <p className="muted" style={{ fontSize: "0.85rem" }}>{t("panel.noRelatives")}</p>
           )}
         </div>
       ) : (
-        <p className="muted" style={{ fontSize: "0.85rem" }}>Loading relatives…</p>
+        <p className="muted" style={{ fontSize: "0.85rem" }}>{t("panel.loadingRelatives")}</p>
       )}
 
       {canEdit && onLinkParent && coParentSuggestions.length > 0 && (
         <div className="suggest-box">
-          <div className="suggest-title">💡 Suggested connection</div>
+          <div className="suggest-title">{t("panel.suggested")}</div>
           {coParentSuggestions.map((s) => (
             <button key={s.id} className="suggest-chip" onClick={() => onLinkParent(s.id)}>
-              ＋ Add <strong>{s.name}</strong> as a parent
-              <span className="muted"> (married to a parent)</span>
+              ＋ {t("panel.addWord")} <strong>{s.name}</strong> {t("panel.asParent")}
+              <span className="muted"> {t("panel.marriedNote")}</span>
             </button>
           ))}
         </div>
@@ -119,18 +127,18 @@ export default function PersonDetailPanel({
 
       {canEdit && onAddRelative && (
         <div className="quick-add">
-          <span className="rel-label" style={{ alignSelf: "center" }}>Add</span>
-          <button className="sm" onClick={() => onAddRelative("parent")}>+ Parent</button>
-          <button className="sm" onClick={() => onAddRelative("sibling")}>+ Sibling</button>
-          <button className="sm" onClick={() => onAddRelative("spouse")}>+ Spouse</button>
-          <button className="sm" onClick={() => onAddRelative("child")}>+ Child</button>
+          <span className="rel-label" style={{ alignSelf: "center" }}>{t("panel.add")}</span>
+          <button className="sm" onClick={() => onAddRelative("parent")}>{t("panel.parent")}</button>
+          <button className="sm" onClick={() => onAddRelative("sibling")}>{t("panel.sibling")}</button>
+          <button className="sm" onClick={() => onAddRelative("spouse")}>{t("panel.spouse")}</button>
+          <button className="sm" onClick={() => onAddRelative("child")}>{t("panel.child")}</button>
         </div>
       )}
 
       {canEdit && onToggleLiving && (
         <div style={{ marginTop: "0.75rem" }}>
           <button className="sm" style={{ width: "100%" }} onClick={onToggleLiving}>
-            {person.is_living ? "🕊 Mark as deceased" : "↩ Mark as living"}
+            {person.is_living ? t("panel.markDeceased") : t("panel.markLiving")}
           </button>
         </div>
       )}
@@ -138,21 +146,17 @@ export default function PersonDetailPanel({
       <div className="detail-actions">
         {onRecenter && (
           <button className="sm" onClick={() => onRecenter(person.id)}>
-            🎯 Center here
+            {t("panel.centerHere")}
           </button>
         )}
         <Link href={`/trees/${treeId}/person/${person.id}`} style={{ flex: 1 }}>
           <button className="primary sm" style={{ width: "100%" }}>
-            View full profile →
+            {t("panel.viewProfile")}
           </button>
         </Link>
       </div>
     </div>
   );
-}
-
-function titleCase(s: string) {
-  return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 function isEmpty(r: Relatives) {

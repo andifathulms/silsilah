@@ -12,21 +12,22 @@ import MediaGallery from "@/components/media/MediaGallery";
 import RelationshipCalculator from "@/components/relationship-calculator/RelationshipCalculator";
 import LifeTimeline from "@/components/timeline/LifeTimeline";
 import Comments from "@/components/comments/Comments";
+import { useI18n } from "@/lib/i18n";
+import { genderLabel } from "@/components/person-detail/PersonDetailPanel";
 
-const FIELD_LABELS: Record<string, string> = {
-  name: "Name",
-  gender: "Gender",
-  birth_date: "Birth date",
-  death_date: "Death date",
-  is_living: "Living",
-  notes: "Notes",
-  is_archived: "Archived",
-  photo: "Photo",
+const FIELD_KEYS: Record<string, string> = {
+  name: "form.name",
+  gender: "form.gender",
+  birth_date: "form.birthDate",
+  death_date: "form.deathDate",
+  is_living: "form.living",
+  notes: "form.notes",
 };
 
 function ChangeLog({ entries }: { entries: ChangeLogEntry[] }) {
+  const { t } = useI18n();
   if (!entries.length)
-    return <p className="muted" style={{ margin: 0 }}>No changes recorded yet.</p>;
+    return <p className="muted" style={{ margin: 0 }}>{t("person.noRelationships")}</p>;
   return (
     <div className="timeline">
       {entries.map((e) => (
@@ -35,14 +36,14 @@ function ChangeLog({ entries }: { entries: ChangeLogEntry[] }) {
           <div>
             <div className="muted" style={{ fontSize: "0.8rem" }}>
               <strong style={{ color: "var(--ink-soft)" }}>
-                {e.changed_by_username ?? "Someone"}
+                {e.changed_by_username ?? "—"}
               </strong>{" "}
               · {new Date(e.changed_at).toLocaleString()}
             </div>
             <ul className="diff-list">
               {Object.entries(e.diff).map(([field, [oldV, newV]]) => (
                 <li key={field}>
-                  <span className="diff-field">{FIELD_LABELS[field] ?? field}</span>
+                  <span className="diff-field">{FIELD_KEYS[field] ? t(FIELD_KEYS[field]).replace(" *", "") : field}</span>
                   <span className="diff-old">{String(oldV ?? "—")}</span>
                   <span className="diff-arrow">→</span>
                   <span className="diff-new">{String(newV ?? "—")}</span>
@@ -59,6 +60,7 @@ function ChangeLog({ entries }: { entries: ChangeLogEntry[] }) {
 export default function PersonDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { t } = useI18n();
   const treeId = Number(params.treeId);
   const personId = Number(params.id);
 
@@ -73,15 +75,15 @@ export default function PersonDetailPage() {
 
   const load = useCallback(async () => {
     try {
-      const [t, p, r] = await Promise.all([
+      const [tr, p, r] = await Promise.all([
         api.getTree(treeId),
         api.getPerson(treeId, personId),
         api.getRelatives(treeId, personId),
       ]);
-      setTree(t);
+      setTree(tr);
       setPerson(p);
       setRelatives(r);
-      if (t.my_role === "owner" || t.my_role === "editor") {
+      if (tr.my_role === "owner" || tr.my_role === "editor") {
         api.getChangelog(treeId, personId).then(setChangelog).catch(() => setChangelog([]));
       }
     } catch (err) {
@@ -98,7 +100,7 @@ export default function PersonDetailPage() {
   }, [load, router]);
 
   async function archive() {
-    if (!confirm(`Archive ${person?.name}? They'll be hidden from the tree.`)) return;
+    if (!confirm(t("person.archiveConfirm", { name: person?.name ?? "" }))) return;
     await api.archivePerson(treeId, personId);
     router.push(`/trees/${treeId}`);
   }
@@ -108,7 +110,7 @@ export default function PersonDetailPage() {
     return (
       <>
         <TopBar />
-        <div className="container muted">Loading…</div>
+        <div className="container muted">{t("common.loading")}</div>
       </>
     );
 
@@ -121,7 +123,7 @@ export default function PersonDetailPage() {
       <TopBar />
       <div className="container">
         <nav className="crumbs animate-in">
-          <Link href="/">My trees</Link>
+          <Link href="/">{t("tree.crumbMyTrees")}</Link>
           <span className="muted">/</span>
           <Link href={`/trees/${treeId}`}>{tree?.name ?? "Tree"}</Link>
           <span className="muted">/</span>
@@ -139,11 +141,11 @@ export default function PersonDetailPage() {
               <h1 style={{ margin: 0, color: "#fff" }}>{person.name}</h1>
               <div className="row wrap" style={{ gap: "0.4rem", marginTop: "0.5rem" }}>
                 <span className="badge" style={{ background: "rgba(255,255,255,0.16)", color: "#fff", border: "1px solid rgba(255,255,255,0.2)" }}>
-                  {person.is_living ? "● Living" : "In memory"}
+                  {person.is_living ? `● ${t("person.living")}` : t("person.inMemory")}
                 </span>
                 {person.gender && (
                   <span className="badge" style={{ background: "rgba(255,255,255,0.16)", color: "#fff", border: "1px solid rgba(255,255,255,0.2)" }}>
-                    {titleCase(person.gender)}
+                    {genderLabel(t, person.gender)}
                   </span>
                 )}
                 {(lifespan[0] || lifespan[1]) && (
@@ -155,8 +157,8 @@ export default function PersonDetailPage() {
             </div>
             {canEdit && !editing && (
               <div className="row profile-actions">
-                <button onClick={() => setEditing(true)}>✎ Edit</button>
-                <button className="danger" onClick={archive}>Archive</button>
+                <button onClick={() => setEditing(true)}>✎ {t("person.edit")}</button>
+                <button className="danger" onClick={archive}>{t("person.archive")}</button>
               </div>
             )}
           </div>
@@ -166,10 +168,10 @@ export default function PersonDetailPage() {
           <div className="card">
             {editing ? (
               <>
-                <h3 style={{ marginTop: 0 }}>Edit details</h3>
+                <h3 style={{ marginTop: 0 }}>{t("person.editDetails")}</h3>
                 <PersonForm
                   initial={person}
-                  submitLabel="Save changes"
+                  submitLabel={t("person.saveChanges")}
                   onCancel={() => setEditing(false)}
                   onSubmit={async (values) => {
                     await api.updatePerson(treeId, personId, {
@@ -184,21 +186,21 @@ export default function PersonDetailPage() {
               </>
             ) : (
               <>
-                <h3 style={{ marginTop: 0 }}>Details</h3>
+                <h3 style={{ marginTop: 0 }}>{t("person.details")}</h3>
                 {person._private_redacted && (
                   <p className="muted" style={{ fontSize: "0.85rem", marginTop: 0 }}>
-                    🔒 Some fields are hidden for living people at your access level.
+                    🔒 {t("person.privacyHidden")}
                   </p>
                 )}
                 <dl className="detail-dl">
-                  <dt>Gender</dt><dd>{person.gender ? titleCase(person.gender) : "—"}</dd>
-                  <dt>Born</dt><dd>{person.birth_date || "—"}</dd>
-                  <dt>Died</dt><dd>{person.death_date || "—"}</dd>
-                  <dt>Status</dt><dd>{person.is_living ? "Living" : "Deceased"}</dd>
+                  <dt>{t("form.gender")}</dt><dd>{person.gender ? genderLabel(t, person.gender) : "—"}</dd>
+                  <dt>{t("person.born")}</dt><dd>{person.birth_date || "—"}</dd>
+                  <dt>{t("person.died")}</dt><dd>{person.death_date || "—"}</dd>
+                  <dt>{t("person.status")}</dt><dd>{person.is_living ? t("person.living") : t("person.deceased")}</dd>
                 </dl>
                 {person.notes && (
                   <>
-                    <h4 style={{ marginBottom: "0.4rem" }}>Notes</h4>
+                    <h4 style={{ marginBottom: "0.4rem" }}>{t("person.notes")}</h4>
                     <p style={{ whiteSpace: "pre-wrap", margin: 0 }}>{person.notes}</p>
                   </>
                 )}
@@ -207,20 +209,20 @@ export default function PersonDetailPage() {
           </div>
 
           <div className="card">
-            <h3 style={{ marginTop: 0 }}>Family</h3>
+            <h3 style={{ marginTop: 0 }}>{t("person.family")}</h3>
             {relatives ? (
               <RelativeLinks treeId={treeId} relatives={relatives} />
             ) : (
-              <p className="muted">Loading…</p>
+              <p className="muted">{t("common.loading")}</p>
             )}
             <div className="divider" />
-            <h4 style={{ margin: "0 0 0.6rem" }}>🧮 Relationship calculator</h4>
+            <h4 style={{ margin: "0 0 0.6rem" }}>🧮 {t("person.relCalc")}</h4>
             <RelationshipCalculator treeId={treeId} person={person} />
           </div>
         </div>
 
         <div className="card animate-in d3" style={{ marginTop: "1.25rem" }}>
-          <h3 style={{ marginTop: 0 }}>🕰 Life timeline</h3>
+          <h3 style={{ marginTop: 0 }}>🕰 {t("person.timeline")}</h3>
           <LifeTimeline
             treeId={treeId}
             person={person}
@@ -230,7 +232,7 @@ export default function PersonDetailPage() {
         </div>
 
         <div className="card animate-in d3" style={{ marginTop: "1.25rem" }}>
-          <h3 style={{ marginTop: 0 }}>📷 Photos & memories</h3>
+          <h3 style={{ marginTop: 0 }}>📷 {t("person.photos")}</h3>
           <MediaGallery
             treeId={treeId}
             personId={personId}
@@ -240,14 +242,14 @@ export default function PersonDetailPage() {
         </div>
 
         <div className="card animate-in d4" style={{ marginTop: "1.25rem" }}>
-          <h3 style={{ marginTop: 0 }}>💬 Stories & memories</h3>
+          <h3 style={{ marginTop: 0 }}>💬 {t("person.stories")}</h3>
           <Comments treeId={treeId} personId={personId} personName={person.name} canPost={canEdit} />
         </div>
 
         {canEdit && (
           <div className="card animate-in d4" style={{ marginTop: "1.25rem" }}>
-            <h3 style={{ marginTop: 0 }}>🕓 Change history</h3>
-            {changelog ? <ChangeLog entries={changelog} /> : <p className="muted">Loading…</p>}
+            <h3 style={{ marginTop: 0 }}>🕓 {t("person.changeHistory")}</h3>
+            {changelog ? <ChangeLog entries={changelog} /> : <p className="muted">{t("common.loading")}</p>}
           </div>
         )}
       </div>
@@ -255,22 +257,19 @@ export default function PersonDetailPage() {
   );
 }
 
-function titleCase(s: string) {
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}
-
 function RelativeLinks({ treeId, relatives }: { treeId: number; relatives: Relatives }) {
+  const { t } = useI18n();
   const groups: [string, Person[]][] = [
-    ["Parents", relatives.parents],
-    ["Spouses", relatives.spouses],
-    ["Children", relatives.children],
-    ["Full siblings", relatives.siblings_full],
-    ["Half siblings", relatives.siblings_half],
-    ["Grandparents", relatives.grandparents],
+    [t("panel.parents"), relatives.parents],
+    [t("panel.spouses"), relatives.spouses],
+    [t("panel.children"), relatives.children],
+    [t("panel.fullSiblings"), relatives.siblings_full],
+    [t("panel.halfSiblings"), relatives.siblings_half],
+    [t("panel.grandparents"), relatives.grandparents],
   ];
   const anyRelatives = groups.some(([, list]) => list.length > 0);
   if (!anyRelatives)
-    return <p className="muted" style={{ margin: 0 }}>No relationships recorded yet.</p>;
+    return <p className="muted" style={{ margin: 0 }}>{t("person.noRelationships")}</p>;
   return (
     <div className="rel-list" style={{ borderTop: "none", paddingTop: 0 }}>
       {groups.map(([label, list]) =>
