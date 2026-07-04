@@ -461,9 +461,9 @@ textarea { resize: vertical; }
 .f3 .card-label,
 .f3 text.card-text { fill: #fff8ec; }
 .f3 .card { font-family: var(--font-sans); }
-/* Deceased people read as departed: muted, desaturated card. */
-.f3 .card-deceased { filter: grayscale(0.55) brightness(0.96); }
-.f3 .card-deceased .card-inner { opacity: 0.92; }
+/* Deceased people read as departed: muted, desaturated, softly faded. */
+.f3 .card-deceased { filter: grayscale(0.78) brightness(0.98) opacity(0.9); }
+.f3 .card-deceased .card-inner { opacity: 0.95; }
 
 /* ---------- Home / trees dashboard ---------- */
 .create-tree {
