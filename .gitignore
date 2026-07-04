@@ -36,3 +36,6 @@ yarn-error.log*
 .coverage
 htmlcov/
 .pytest_cache/
+
+# GEDCOM / data exports
+exports/
