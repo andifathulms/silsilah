@@ -33,18 +33,18 @@ export function kinLabel(locale: Locale, t: T, s: RelStruct): string {
     case "descendant":
       if (s.down === 1) return byg("rel.son", "rel.daughter", "rel.child");
       if (s.down === 2) return byg("rel.grandson", "rel.granddaughter", "rel.grandchild");
-      if (s.down === 3) return t("rel.greatGrandchild");
-      return locale === "id"
-        ? t("rel.descendantN", { n: s.down })
-        : greatEN(s.down - 2) + t("rel.grandchild");
+      // down >= 3: Indonesian uses "cicit" (3) then a generation fallback;
+      // English keeps gender with a stacked "great-" prefix.
+      if (locale === "id")
+        return s.down === 3 ? t("rel.greatGrandchild") : t("rel.descendantN", { n: s.down });
+      return greatEN(s.down - 2) + byg("rel.grandson", "rel.granddaughter", "rel.grandchild");
 
     case "ancestor":
       if (s.up === 1) return byg("rel.father", "rel.mother", "rel.parent");
       if (s.up === 2) return byg("rel.grandfather", "rel.grandmother", "rel.grandparent");
-      if (s.up === 3) return t("rel.greatGrandparent");
-      return locale === "id"
-        ? t("rel.ancestorN", { n: s.up })
-        : greatEN(s.up - 2) + t("rel.grandparent");
+      if (locale === "id")
+        return s.up === 3 ? t("rel.greatGrandparent") : t("rel.ancestorN", { n: s.up });
+      return greatEN(s.up - 2) + byg("rel.grandfather", "rel.grandmother", "rel.grandparent");
 
     case "sibling":
       return byg("rel.brother", "rel.sister", "rel.sibling");
