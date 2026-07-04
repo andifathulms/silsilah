@@ -5,40 +5,40 @@
    ============================================================ */
 
 :root {
-  /* Brand — evergreen (roots/lineage) */
-  --forest-900: #0b241a;
-  --forest-800: #0f3527;
-  --forest-700: #14503a;
-  --forest-600: #1a6b4c;
-  --forest-500: #268a63;
-  --forest-400: #4aa982;
+  /* Brand — pine/emerald (roots, growth, permanence) */
+  --forest-900: #0a2a1e;
+  --forest-800: #0f3d2b;
+  --forest-700: #16563d;
+  --forest-600: #1d7150;
+  --forest-500: #2c9068;
+  --forest-400: #58ad86;
 
-  /* Accent — heirloom gold */
-  --gold-600: #b0871b;
-  --gold-500: #c9a227;
-  --gold-400: #e0b84c;
-  --gold-100: #f6ecc9;
+  /* Accent — antique brass (heirloom, warmth) */
+  --gold-600: #a67c2e;
+  --gold-500: #c19a45;
+  --gold-400: #d8b566;
+  --gold-100: #f4ead0;
 
-  /* Warm neutrals */
-  --cream: #faf6ee;
-  --parchment: #f4ede0;
-  --sand: #ece3d2;
+  /* Warm ivory neutrals — cleaner and more premium than beige */
+  --cream: #fbf9f4;
+  --parchment: #f4f0e7;
+  --sand: #ece6d9;
 
-  --ink: #1a231d;
-  --ink-soft: #3c463f;
-  --muted: #7c8178;
-  --danger: #bb4a34;
-  --danger-soft: #f3e0da;
+  --ink: #1e211c;
+  --ink-soft: #474d44;
+  --muted: #8a8578;
+  --danger: #b8492f;
+  --danger-soft: #f4e2da;
 
-  /* Semantic surfaces */
-  --bg: #f3ede2;
-  --surface: #fffdf8;
-  --surface-2: #f8f2e7;
-  --border: #e6dcc8;
-  --border-strong: #d8ccb2;
-  --topbar-bg: rgba(255, 253, 248, 0.72);
-  --stage-grad: radial-gradient(100% 100% at 50% 0%, #fffdf8, #f4ede0 90%);
-  --input-glass: rgba(255, 253, 248, 0.92);
+  /* Semantic surfaces — crisp white cards on a warm-ivory canvas */
+  --bg: #f4f1e9;
+  --surface: #ffffff;
+  --surface-2: #f8f5ee;
+  --border: #eae4d6;
+  --border-strong: #ddd5c3;
+  --topbar-bg: rgba(255, 255, 255, 0.72);
+  --stage-grad: radial-gradient(120% 120% at 50% 0%, #ffffff, #f5f1e8 90%);
+  --input-glass: rgba(255, 255, 255, 0.92);
 
   /* Effects */
   --grad-hero: radial-gradient(120% 120% at 0% 0%, #1a6b4c 0%, #14503a 45%, #0b241a 100%);
@@ -46,20 +46,20 @@
   --grad-forest: linear-gradient(135deg, var(--forest-600), var(--forest-700));
   --grad-sheen: linear-gradient(180deg, rgba(255,255,255,0.7), rgba(255,255,255,0));
 
-  --shadow-sm: 0 1px 2px rgba(26, 35, 29, 0.06);
-  --shadow: 0 4px 16px -6px rgba(26, 35, 29, 0.14), 0 1px 3px rgba(26, 35, 29, 0.06);
-  --shadow-lg: 0 24px 48px -18px rgba(11, 36, 26, 0.32), 0 4px 12px -6px rgba(11, 36, 26, 0.16);
-  --shadow-gold: 0 8px 24px -8px rgba(176, 135, 27, 0.5);
-  --ring: 0 0 0 3px rgba(38, 138, 99, 0.22);
+  --shadow-sm: 0 1px 2px rgba(26, 35, 29, 0.05);
+  --shadow: 0 6px 20px -10px rgba(26, 35, 29, 0.16), 0 1px 2px rgba(26, 35, 29, 0.05);
+  --shadow-lg: 0 30px 60px -22px rgba(10, 42, 30, 0.30), 0 6px 16px -8px rgba(10, 42, 30, 0.14);
+  --shadow-gold: 0 10px 28px -10px rgba(166, 124, 46, 0.45);
+  --ring: 0 0 0 3px rgba(44, 144, 104, 0.20);
 
-  --r-sm: 8px;
-  --r: 14px;
-  --r-lg: 20px;
-  --r-xl: 28px;
+  --r-sm: 10px;
+  --r: 16px;
+  --r-lg: 22px;
+  --r-xl: 30px;
   --r-full: 999px;
 
-  --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, "Times New Roman", serif;
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+  --font-serif: var(--font-display), "Iowan Old Style", Palatino, Georgia, serif;
+  --font-sans: var(--font-body), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 
   /* Shared layout rhythm — topbar and page content align to the same gutter */
   --content-max: 1200px;
@@ -71,34 +71,38 @@
 
 /* ---------- Dark theme ---------- */
 :root[data-theme="dark"] {
-  --cream: #16201a;
-  --parchment: #1b2620;
-  --sand: #263029;
+  --cream: #141b16;
+  --parchment: #18201a;
+  --sand: #232d26;
 
-  --ink: #e9efe6;
-  --ink-soft: #c3ccbf;
-  --muted: #8b968a;
+  --ink: #eaf0e7;
+  --ink-soft: #c4ccc0;
+  --muted: #8d978b;
 
-  --bg: #0e1512;
-  --surface: #18221c;
-  --surface-2: #202b23;
-  --border: #2b3830;
-  --border-strong: #3a4b3f;
-  --topbar-bg: rgba(20, 30, 25, 0.72);
-  --stage-grad: radial-gradient(100% 100% at 50% 0%, #1a241d, #131b16 90%);
-  --input-glass: rgba(28, 40, 33, 0.92);
+  --forest-400: #6cbc95;
+  --gold-500: #d3ac5a;
+  --gold-400: #e0c079;
 
-  --gold-100: #3b3312;
-  --danger-soft: #3a221c;
+  --bg: #0d1310;
+  --surface: #171f1a;
+  --surface-2: #1e2822;
+  --border: #29352e;
+  --border-strong: #38473d;
+  --topbar-bg: rgba(18, 26, 21, 0.72);
+  --stage-grad: radial-gradient(120% 120% at 50% 0%, #1a231d, #121a15 90%);
+  --input-glass: rgba(26, 36, 30, 0.92);
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow: 0 4px 16px -6px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 24px 48px -18px rgba(0, 0, 0, 0.7), 0 4px 12px -6px rgba(0, 0, 0, 0.5);
+  --gold-100: #3a3114;
+  --danger-soft: #3a231c;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow: 0 6px 20px -10px rgba(0, 0, 0, 0.6), 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 30px 60px -22px rgba(0, 0, 0, 0.75), 0 6px 16px -8px rgba(0, 0, 0, 0.5);
 }
 :root[data-theme="dark"] body {
   background-image:
-    radial-gradient(60% 50% at 100% 0%, rgba(224, 184, 76, 0.06), transparent 60%),
-    radial-gradient(55% 45% at 0% 100%, rgba(38, 138, 99, 0.10), transparent 60%);
+    radial-gradient(60% 50% at 100% 0%, rgba(216, 181, 102, 0.06), transparent 60%),
+    radial-gradient(55% 45% at 0% 100%, rgba(44, 144, 104, 0.10), transparent 60%);
 }
 
 * {
@@ -112,28 +116,33 @@ body {
   color: var(--ink);
   background-color: var(--bg);
   background-image:
-    radial-gradient(60% 50% at 100% 0%, rgba(224, 184, 76, 0.10), transparent 60%),
-    radial-gradient(55% 45% at 0% 100%, rgba(38, 138, 99, 0.10), transparent 60%);
+    radial-gradient(60% 50% at 100% 0%, rgba(216, 181, 102, 0.10), transparent 60%),
+    radial-gradient(55% 45% at 0% 100%, rgba(44, 144, 104, 0.09), transparent 60%);
   background-attachment: fixed;
   font-family: var(--font-sans);
-  font-size: 15px;
-  line-height: 1.55;
+  font-size: 15.5px;
+  line-height: 1.6;
+  letter-spacing: -0.006em;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
 h1, h2, h3, h4 {
   font-family: var(--font-serif);
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  font-weight: 560;
+  font-optical-sizing: auto;
+  letter-spacing: -0.015em;
   color: var(--ink);
-  line-height: 1.15;
+  line-height: 1.12;
+  text-wrap: balance;
 }
-h1 { font-size: clamp(1.7rem, 3vw, 2.3rem); margin: 0 0 0.35rem; }
-h2 { font-size: 1.5rem; }
-h3 { font-size: 1.2rem; }
+h1 { font-size: clamp(1.95rem, 3.4vw, 2.75rem); margin: 0 0 0.4rem; font-weight: 500; }
+h2 { font-size: clamp(1.4rem, 2.2vw, 1.7rem); }
+h3 { font-size: 1.24rem; }
+h4 { font-size: 1.02rem; letter-spacing: -0.01em; }
 
 p { margin: 0 0 0.9rem; }
+strong { font-weight: 600; }
 
 a {
   color: var(--forest-600);
@@ -151,7 +160,8 @@ a:hover { color: var(--forest-500); }
 button,
 .btn {
   font: inherit;
-  font-weight: 600;
+  font-weight: 550;
+  letter-spacing: -0.01em;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -160,7 +170,7 @@ button,
   border: 1px solid var(--border-strong);
   background: var(--surface);
   color: var(--ink);
-  padding: 0.55rem 1rem;
+  padding: 0.55rem 1.05rem;
   border-radius: var(--r-full);
   box-shadow: var(--shadow-sm);
   transition: transform 0.14s var(--ease-out), box-shadow 0.18s var(--ease),
@@ -233,11 +243,11 @@ button:disabled,
 /* ---------- Forms ---------- */
 label {
   display: block;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 600;
   color: var(--ink-soft);
-  margin-bottom: 0.35rem;
-  letter-spacing: 0.01em;
+  margin-bottom: 0.4rem;
+  letter-spacing: 0.005em;
 }
 
 input,
@@ -245,9 +255,9 @@ select,
 textarea {
   font: inherit;
   width: 100%;
-  padding: 0.6rem 0.8rem;
+  padding: 0.65rem 0.85rem;
   color: var(--ink);
-  background: var(--surface);
+  background: var(--surface-2);
   border: 1px solid var(--border-strong);
   border-radius: var(--r-sm);
   transition: border-color 0.16s var(--ease), box-shadow 0.16s var(--ease), background 0.16s var(--ease);
@@ -272,7 +282,7 @@ textarea { resize: vertical; }
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   box-shadow: var(--shadow);
-  padding: 1.4rem;
+  padding: 1.5rem;
 }
 .card-hover {
   transition: transform 0.2s var(--ease-out), box-shadow 0.24s var(--ease), border-color 0.2s var(--ease);
@@ -311,8 +321,9 @@ textarea { resize: vertical; }
 }
 .topbar .brand {
   font-family: var(--font-serif);
-  font-weight: 600;
-  font-size: 1.2rem;
+  font-weight: 500;
+  font-size: 1.32rem;
+  letter-spacing: -0.02em;
   color: var(--forest-700);
   display: inline-flex;
   align-items: center;
@@ -364,9 +375,9 @@ textarea { resize: vertical; }
 
 .eyebrow {
   font-family: var(--font-sans);
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--gold-600);
 }
