@@ -94,11 +94,13 @@ export default function TreeView({ people, relationships, mainId, onSelect }: Pr
     (id: number, smooth = true) => {
       const n = nodeById.get(id);
       if (!n || !size.w) return;
-      const k = clamp(Math.max(tf.k, 0.75), MIN_K, MAX_K);
+      // Keep the current zoom (only nudge up if extremely zoomed out) so
+      // focusing a person pans without a jarring jump.
+      const k = clamp(Math.max(tf.k, 0.4), MIN_K, MAX_K);
       setAnimate(smooth);
       setTf({
         x: size.w / 2 - (n.x + NODE_W / 2) * k,
-        y: size.h / 2.6 - (n.y + NODE_H / 2) * k,
+        y: size.h / 2.4 - (n.y + NODE_H / 2) * k,
         k,
       });
     },
