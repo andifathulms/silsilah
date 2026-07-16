@@ -213,6 +213,7 @@ export default function TreePage() {
                 relationships={relationships}
                 mainId={mainId}
                 onSelect={setSelectedId}
+                onOpen={(id) => router.push(`/trees/${treeId}/person/${id}`)}
               />
             )}
             {people.length > 0 && (

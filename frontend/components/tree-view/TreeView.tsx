@@ -17,6 +17,8 @@ interface Props {
   /** Person to center the view on ("show me my branch"). */
   mainId?: number | null;
   onSelect?: (personId: number) => void;
+  /** Double-click a node (e.g. to open the full profile). */
+  onOpen?: (personId: number) => void;
 }
 
 interface Transform {
@@ -41,7 +43,7 @@ function genderClass(gender: string): string {
  * from `computeTreeLayout`; this component draws the SVG (couple + parent-child
  * links and HTML cards) and owns pan / zoom / select / recenter.
  */
-export default function TreeView({ people, relationships, mainId, onSelect }: Props) {
+export default function TreeView({ people, relationships, mainId, onSelect, onOpen }: Props) {
   const { t } = useI18n();
   const wrapRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
@@ -359,6 +361,7 @@ export default function TreeView({ people, relationships, mainId, onSelect }: Pr
               style={{ position: "absolute", left: n.x, top: n.y, width: NODE_W }}
               onMouseEnter={() => !drag.current && setHoverId(n.id)}
               onMouseLeave={() => setHoverId((h) => (h === n.id ? null : h))}
+              onDoubleClick={() => onOpen?.(n.id)}
             >
               <TreeCard
                 node={n}
