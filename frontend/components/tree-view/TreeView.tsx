@@ -48,16 +48,96 @@ export default function TreeView({ people, relationships, mainId, onSelect }: Pr
   const [tf, setTf] = useState<Transform>({ x: 0, y: 0, k: 1 });
   const [animate, setAnimate] = useState(false);
   const [active, setActive] = useState<number | null>(mainId ?? null);
+  const [collapsed, setCollapsed] = useState<Set<number>>(new Set());
+
+  // Child/parent/spouse maps (from full data) for collapse logic + toggles.
+  const { childrenOf, parentsOf, spousesOf } = useMemo(() => {
+    const c = new Map<number, number[]>();
+    const p = new Map<number, number[]>();
+    const s = new Map<number, number[]>();
+    for (const r of relationships) {
+      if (r.type === "parent_child") {
+        (c.get(r.person_a) ?? c.set(r.person_a, []).get(r.person_a)!).push(r.person_b);
+        (p.get(r.person_b) ?? p.set(r.person_b, []).get(r.person_b)!).push(r.person_a);
+      } else if (r.type === "spouse") {
+        (s.get(r.person_a) ?? s.set(r.person_a, []).get(r.person_a)!).push(r.person_b);
+        (s.get(r.person_b) ?? s.set(r.person_b, []).get(r.person_b)!).push(r.person_a);
+      }
+    }
+    return { childrenOf: c, parentsOf: p, spousesOf: s };
+  }, [relationships]);
+
+  // A person is hidden when every one of their parents is "closed" — collapsed,
+  // already hidden, or married to a collapsed person (children hang from a
+  // couple, so folding one spouse folds the family). A child with a separate
+  // still-visible parent (branches joined by marriage) stays put.
+  const hidden = useMemo(() => {
+    const hide = new Set<number>();
+    if (collapsed.size === 0) return hide;
+    const closed = (pp: number) =>
+      collapsed.has(pp) ||
+      hide.has(pp) ||
+      (spousesOf.get(pp) ?? []).some((s) => collapsed.has(s));
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (const p of people) {
+        if (collapsed.has(p.id) || hide.has(p.id)) continue;
+        const par = parentsOf.get(p.id) ?? [];
+        if (par.length > 0 && par.every(closed)) {
+          hide.add(p.id);
+          changed = true;
+        }
+      }
+    }
+    return hide;
+  }, [collapsed, people, parentsOf, spousesOf]);
+
+  const hiddenCount = useMemo(() => {
+    // For each collapsed node, how many of its descendants are hidden.
+    const counts = new Map<number, number>();
+    for (const c of collapsed) {
+      let n = 0;
+      const stack = [...(childrenOf.get(c) ?? [])];
+      const seen = new Set<number>();
+      while (stack.length) {
+        const x = stack.pop()!;
+        if (seen.has(x)) continue;
+        seen.add(x);
+        if (hidden.has(x)) n++;
+        for (const cc of childrenOf.get(x) ?? []) stack.push(cc);
+      }
+      counts.set(c, n);
+    }
+    return counts;
+  }, [collapsed, childrenOf, hidden]);
+
+  const { visiblePeople, visibleRels } = useMemo(() => {
+    if (hidden.size === 0) return { visiblePeople: people, visibleRels: relationships };
+    const vp = people.filter((p) => !hidden.has(p.id));
+    const vr = relationships.filter(
+      (r) => !hidden.has(r.person_a) && !hidden.has(r.person_b)
+    );
+    return { visiblePeople: vp, visibleRels: vr };
+  }, [people, relationships, hidden]);
 
   const layout = useMemo(
-    () => computeTreeLayout(people, relationships),
-    [people, relationships]
+    () => computeTreeLayout(visiblePeople, visibleRels),
+    [visiblePeople, visibleRels]
   );
   const nodeById = useMemo(() => {
     const m = new Map<number, LayoutNode>();
     layout.nodes.forEach((n) => m.set(n.id, n));
     return m;
   }, [layout]);
+
+  function toggleCollapse(id: number) {
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
 
   // Measure the container.
   useEffect(() => {
@@ -71,8 +151,8 @@ export default function TreeView({ people, relationships, mainId, onSelect }: Pr
     return () => ro.disconnect();
   }, []);
 
-  // Fit the whole tree when the data (or first size) changes.
-  const fitKey = `${layout.width}x${layout.height}`;
+  // Fit the whole tree when the underlying data (or first size) changes —
+  // not on collapse, so folding a branch doesn't yank the whole view.
   useEffect(() => {
     if (!size.w || !size.h || !layout.width) return;
     const k = clamp(
@@ -87,7 +167,7 @@ export default function TreeView({ people, relationships, mainId, onSelect }: Pr
       k,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fitKey, size.w, size.h]);
+  }, [people, relationships, size.w, size.h]);
 
   // Center on a specific person when asked (search / "center here").
   const centerOn = useCallback(
@@ -213,12 +293,16 @@ export default function TreeView({ people, relationships, mainId, onSelect }: Pr
 
           {/* Cards */}
           {layout.nodes.map((n) => (
-            <foreignObject key={n.id} x={n.x} y={n.y} width={NODE_W} height={NODE_H}>
+            <foreignObject key={n.id} x={n.x} y={n.y} width={NODE_W} height={NODE_H + 22} style={{ overflow: "visible" }}>
               <TreeCard
                 node={n}
                 selected={n.id === active}
                 sublabel={sublabel(n.person, t)}
+                hasChildren={(childrenOf.get(n.id)?.length ?? 0) > 0}
+                collapsed={collapsed.has(n.id)}
+                hiddenCount={hiddenCount.get(n.id) ?? 0}
                 onClick={() => handleNodeClick(n.id)}
+                onToggleCollapse={() => toggleCollapse(n.id)}
               />
             </foreignObject>
           ))}
@@ -233,12 +317,20 @@ function TreeCard({
   node,
   selected,
   sublabel,
+  hasChildren,
+  collapsed,
+  hiddenCount,
   onClick,
+  onToggleCollapse,
 }: {
   node: LayoutNode;
   selected: boolean;
   sublabel: string;
+  hasChildren: boolean;
+  collapsed: boolean;
+  hiddenCount: number;
   onClick: () => void;
+  onToggleCollapse: () => void;
 }) {
   const p = node.person;
   const photo = mediaUrl(p.photo);
@@ -250,6 +342,9 @@ function TreeCard({
   ]
     .filter(Boolean)
     .join(" ");
+  // Offer the toggle only when this node actually has a foldable subtree
+  // (children now, or hidden descendants while collapsed).
+  const showToggle = hasChildren && (!collapsed || hiddenCount > 0);
   return (
     <div className={cls} onClick={onClick} role="button" title={p.name}>
       <div className="tree-node-avatar">
@@ -264,6 +359,19 @@ function TreeCard({
         <div className="tree-node-name">{p.name}</div>
         {sublabel && <div className="tree-node-sub">{sublabel}</div>}
       </div>
+      {showToggle && (
+        <button
+          className="tree-node-toggle"
+          title={collapsed ? "Expand" : "Collapse"}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleCollapse();
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          {collapsed ? `+${hiddenCount}` : "–"}
+        </button>
+      )}
     </div>
   );
 }
