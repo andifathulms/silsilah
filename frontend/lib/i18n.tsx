@@ -73,6 +73,8 @@ const en: Dict = {
   "tree.members": "Members",
   "tree.share": "Share",
   "tree.hint": "Click a person to focus · drag to pan · scroll to zoom",
+  "tree.emptyPeople": "No people yet. Add someone to start the tree.",
+  "node.born": "b.",
 
   "common.cancel": "Cancel",
   "common.save": "Save",
@@ -422,6 +424,8 @@ const id: Dict = {
   "tree.members": "Anggota",
   "tree.share": "Bagikan",
   "tree.hint": "Klik seseorang untuk fokus · seret untuk geser · gulir untuk perbesar",
+  "tree.emptyPeople": "Belum ada orang. Tambahkan seseorang untuk memulai pohon.",
+  "node.born": "l.",
 
   "common.cancel": "Batal",
   "common.save": "Simpan",
