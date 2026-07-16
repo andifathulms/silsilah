@@ -255,13 +255,23 @@ export default function TreeView({ people, relationships, mainId, onSelect }: Pr
     >
       {empty && <p className="muted">{t("tree.emptyPeople")}</p>}
       {!empty && (
-      <svg width={size.w} height={size.h} style={{ display: "block" }}>
-        <g
-          transform={`translate(${tf.x} ${tf.y}) scale(${tf.k})`}
-          style={{ transition: animate ? "transform 0.5s cubic-bezier(0.16,1,0.3,1)" : "none" }}
+        // One CSS-transformed "world" holds both the links SVG and the HTML
+        // cards, so pan/zoom moves everything together (no foreignObject —
+        // which fails to follow SVG transforms in some browsers).
+        <div
+          className="tree-world"
+          style={{
+            transform: `translate(${tf.x}px, ${tf.y}px) scale(${tf.k})`,
+            transformOrigin: "0 0",
+            transition: animate ? "transform 0.5s cubic-bezier(0.16,1,0.3,1)" : "none",
+          }}
         >
-          {/* Links first (behind cards) */}
-          <g className="tree-links">
+          <svg
+            className="tree-links"
+            width={layout.width}
+            height={layout.height}
+            style={{ position: "absolute", top: 0, left: 0, overflow: "visible" }}
+          >
             {layout.couples.map((c, i) => {
               const a = nodeById.get(c.a);
               const b = nodeById.get(c.b);
@@ -289,11 +299,13 @@ export default function TreeView({ people, relationships, mainId, onSelect }: Pr
                 />
               );
             })}
-          </g>
+          </svg>
 
-          {/* Cards */}
           {layout.nodes.map((n) => (
-            <foreignObject key={n.id} x={n.x} y={n.y} width={NODE_W} height={NODE_H + 22} style={{ overflow: "visible" }}>
+            <div
+              key={n.id}
+              style={{ position: "absolute", left: n.x, top: n.y, width: NODE_W }}
+            >
               <TreeCard
                 node={n}
                 selected={n.id === active}
@@ -304,10 +316,9 @@ export default function TreeView({ people, relationships, mainId, onSelect }: Pr
                 onClick={() => handleNodeClick(n.id)}
                 onToggleCollapse={() => toggleCollapse(n.id)}
               />
-            </foreignObject>
+            </div>
           ))}
-        </g>
-      </svg>
+        </div>
       )}
     </div>
   );

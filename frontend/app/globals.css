@@ -452,6 +452,7 @@ textarea { resize: vertical; }
 }
 .tree-canvas:active { cursor: grabbing; }
 .tree-empty { display: grid; place-items: center; }
+.tree-world { position: absolute; top: 0; left: 0; will-change: transform; }
 
 /* Links */
 .link-couple { stroke: var(--gold-500); stroke-width: 2.5px; }
