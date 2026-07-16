@@ -49,6 +49,7 @@ export default function TreeView({ people, relationships, mainId, onSelect }: Pr
   const [animate, setAnimate] = useState(false);
   const [active, setActive] = useState<number | null>(mainId ?? null);
   const [collapsed, setCollapsed] = useState<Set<number>>(new Set());
+  const [hoverId, setHoverId] = useState<number | null>(null);
 
   // Child/parent/spouse maps (from full data) for collapse logic + toggles.
   const { childrenOf, parentsOf, spousesOf } = useMemo(() => {
@@ -130,6 +131,16 @@ export default function TreeView({ people, relationships, mainId, onSelect }: Pr
     layout.nodes.forEach((n) => m.set(n.id, n));
     return m;
   }, [layout]);
+
+  // On hover: the person + their immediate family (parents, spouses, children).
+  const related = useMemo(() => {
+    if (hoverId == null) return null;
+    const s = new Set<number>([hoverId]);
+    for (const x of parentsOf.get(hoverId) ?? []) s.add(x);
+    for (const x of childrenOf.get(hoverId) ?? []) s.add(x);
+    for (const x of spousesOf.get(hoverId) ?? []) s.add(x);
+    return s;
+  }, [hoverId, parentsOf, childrenOf, spousesOf]);
 
   function toggleCollapse(id: number) {
     setCollapsed((prev) => {
@@ -297,7 +308,7 @@ export default function TreeView({ people, relationships, mainId, onSelect }: Pr
           }}
         >
           <svg
-            className="tree-links"
+            className={`tree-links${related ? " has-hover" : ""}`}
             width={layout.width}
             height={layout.height}
             style={{ position: "absolute", top: 0, left: 0, overflow: "visible" }}
@@ -309,7 +320,17 @@ export default function TreeView({ people, relationships, mainId, onSelect }: Pr
               const y = a.y + NODE_H / 2;
               const x1 = Math.min(a.x, b.x) + NODE_W;
               const x2 = Math.max(a.x, b.x);
-              return <line key={`c${i}`} className="link-couple" x1={x1} y1={y} x2={x2} y2={y} />;
+              const hi = c.a === hoverId || c.b === hoverId;
+              return (
+                <line
+                  key={`c${i}`}
+                  className={`link-couple${hi ? " hi" : ""}`}
+                  x1={x1}
+                  y1={y}
+                  x2={x2}
+                  y2={y}
+                />
+              );
             })}
             {layout.childLinks.map((cl) => {
               const child = nodeById.get(cl.child);
@@ -320,10 +341,11 @@ export default function TreeView({ people, relationships, mainId, onSelect }: Pr
               const cx = child.x + NODE_W / 2;
               const cy = child.y;
               const midY = py + (cy - py) / 2;
+              const hi = cl.child === hoverId || cl.parents.includes(hoverId ?? -1);
               return (
                 <path
                   key={`l${cl.child}`}
-                  className="link-parent"
+                  className={`link-parent${hi ? " hi" : ""}`}
                   d={`M ${px} ${py} V ${midY} H ${cx} V ${cy}`}
                   fill="none"
                 />
@@ -335,10 +357,13 @@ export default function TreeView({ people, relationships, mainId, onSelect }: Pr
             <div
               key={n.id}
               style={{ position: "absolute", left: n.x, top: n.y, width: NODE_W }}
+              onMouseEnter={() => !drag.current && setHoverId(n.id)}
+              onMouseLeave={() => setHoverId((h) => (h === n.id ? null : h))}
             >
               <TreeCard
                 node={n}
                 selected={n.id === active}
+                dimmed={related != null && !related.has(n.id)}
                 sublabel={sublabel(n.person, t)}
                 hasChildren={(childrenOf.get(n.id)?.length ?? 0) > 0}
                 collapsed={collapsed.has(n.id)}
@@ -377,6 +402,7 @@ export default function TreeView({ people, relationships, mainId, onSelect }: Pr
 function TreeCard({
   node,
   selected,
+  dimmed,
   sublabel,
   hasChildren,
   collapsed,
@@ -386,6 +412,7 @@ function TreeCard({
 }: {
   node: LayoutNode;
   selected: boolean;
+  dimmed: boolean;
   sublabel: string;
   hasChildren: boolean;
   collapsed: boolean;
@@ -400,6 +427,7 @@ function TreeCard({
     genderClass(p.gender),
     p.is_living ? "" : "deceased",
     selected ? "selected" : "",
+    dimmed ? "dimmed" : "",
   ]
     .filter(Boolean)
     .join(" ");

@@ -491,9 +491,18 @@ textarea { resize: vertical; }
 }
 
 /* Links */
-.link-couple { stroke: var(--gold-500); stroke-width: 2.5px; }
-.link-parent { stroke: rgba(20, 80, 58, 0.4); stroke-width: 1.75px; }
+.link-couple { stroke: var(--gold-500); stroke-width: 2.5px; transition: opacity 0.15s var(--ease); }
+.link-parent { stroke: rgba(20, 80, 58, 0.4); stroke-width: 1.75px; transition: opacity 0.15s var(--ease), stroke-width 0.15s var(--ease); }
 :root[data-theme="dark"] .link-parent { stroke: rgba(108, 188, 149, 0.45); }
+/* Hover-highlight: dim unrelated links, emphasize connected ones */
+.tree-links.has-hover .link-couple,
+.tree-links.has-hover .link-parent { opacity: 0.18; }
+.tree-links.has-hover .link-couple.hi { opacity: 1; }
+.tree-links.has-hover .link-parent.hi { opacity: 1; stroke-width: 2.75px; stroke: var(--forest-500); }
+
+/* Hover-highlight: fade people outside the hovered person's immediate family */
+.tree-node { transition: transform 0.14s var(--ease-out), box-shadow 0.18s var(--ease), filter 0.18s var(--ease), opacity 0.18s var(--ease); }
+.tree-node.dimmed { opacity: 0.28; }
 
 /* Node cards */
 .tree-node {
