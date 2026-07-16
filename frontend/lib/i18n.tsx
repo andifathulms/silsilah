@@ -79,6 +79,9 @@ const en: Dict = {
   "tree.zoomOut": "Zoom out",
   "tree.collapseAll": "Collapse all",
   "tree.expandAll": "Expand all",
+  "tree.focus": "Focus",
+  "tree.ancestors": "Ancestors",
+  "tree.descendants": "Descendants",
   "node.born": "b.",
 
   "common.cancel": "Cancel",
@@ -435,6 +438,9 @@ const id: Dict = {
   "tree.zoomOut": "Perkecil",
   "tree.collapseAll": "Ciutkan semua",
   "tree.expandAll": "Perluas semua",
+  "tree.focus": "Fokus",
+  "tree.ancestors": "Leluhur",
+  "tree.descendants": "Keturunan",
   "node.born": "l.",
 
   "common.cancel": "Batal",

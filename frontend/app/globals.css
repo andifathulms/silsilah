@@ -454,6 +454,43 @@ textarea { resize: vertical; }
 .tree-empty { display: grid; place-items: center; }
 .tree-world { position: absolute; top: 0; left: 0; will-change: transform; }
 
+/* Focus-mode switcher (ancestors / descendants of the selected person) */
+.tree-focus {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.28rem 0.3rem 0.28rem 0.7rem;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--border);
+  border-radius: var(--r-full);
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(8px);
+}
+:root[data-theme="dark"] .tree-focus { background: rgba(30, 40, 34, 0.9); }
+.tree-focus-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gold-600);
+}
+.tree-focus button {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  border-radius: var(--r-full);
+  padding: 0.3rem 0.7rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+.tree-focus button:hover { background: var(--surface-2); transform: none; box-shadow: none; color: var(--ink-soft); }
+.tree-focus button.active { background: var(--grad-forest); color: #fff; }
+
 /* Floating zoom / fold controls */
 .tree-controls {
   position: absolute;

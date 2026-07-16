@@ -52,6 +52,7 @@ export default function TreeView({ people, relationships, mainId, onSelect, onOp
   const [active, setActive] = useState<number | null>(mainId ?? null);
   const [collapsed, setCollapsed] = useState<Set<number>>(new Set());
   const [hoverId, setHoverId] = useState<number | null>(null);
+  const [focusMode, setFocusMode] = useState<"all" | "ancestors" | "descendants">("all");
 
   // Child/parent/spouse maps (from full data) for collapse logic + toggles.
   const { childrenOf, parentsOf, spousesOf } = useMemo(() => {
@@ -115,14 +116,34 @@ export default function TreeView({ people, relationships, mainId, onSelect, onOp
     return counts;
   }, [collapsed, childrenOf, hidden]);
 
+  // Focus mode: restrict to a person's ancestors or descendants (+ spouses,
+  // so couples still render). null = whole tree.
+  const focusSet = useMemo(() => {
+    if (focusMode === "all" || active == null) return null;
+    const set = new Set<number>([active]);
+    const step = focusMode === "ancestors" ? parentsOf : childrenOf;
+    const stack = [active];
+    while (stack.length) {
+      const x = stack.pop()!;
+      for (const nx of step.get(x) ?? [])
+        if (!set.has(nx)) {
+          set.add(nx);
+          stack.push(nx);
+        }
+    }
+    for (const id of [...set])
+      for (const s of spousesOf.get(id) ?? []) set.add(s);
+    return set;
+  }, [focusMode, active, parentsOf, childrenOf, spousesOf]);
+
   const { visiblePeople, visibleRels } = useMemo(() => {
-    if (hidden.size === 0) return { visiblePeople: people, visibleRels: relationships };
-    const vp = people.filter((p) => !hidden.has(p.id));
-    const vr = relationships.filter(
-      (r) => !hidden.has(r.person_a) && !hidden.has(r.person_b)
-    );
+    if (hidden.size === 0 && !focusSet)
+      return { visiblePeople: people, visibleRels: relationships };
+    const show = (id: number) => !hidden.has(id) && (!focusSet || focusSet.has(id));
+    const vp = people.filter((p) => show(p.id));
+    const vr = relationships.filter((r) => show(r.person_a) && show(r.person_b));
     return { visiblePeople: vp, visibleRels: vr };
-  }, [people, relationships, hidden]);
+  }, [people, relationships, hidden, focusSet]);
 
   const layout = useMemo(
     () => computeTreeLayout(visiblePeople, visibleRels),
@@ -238,6 +259,17 @@ export default function TreeView({ people, relationships, mainId, onSelect, onOp
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mainId]);
 
+  // Re-fit when focus mode toggles, or (while focusing) when the anchor
+  // person changes — the visible subtree size shifts, so re-frame it.
+  useEffect(() => {
+    fitAll(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusMode]);
+  useEffect(() => {
+    if (focusMode !== "all") fitAll(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active]);
+
   // --- Wheel zoom (around the cursor) ---
   useEffect(() => {
     const el = wrapRef.current;
@@ -282,7 +314,7 @@ export default function TreeView({ people, relationships, mainId, onSelect, onOp
     if (drag.current?.moved) return; // was a pan, not a click
     setActive(id);
     onSelect?.(id);
-    centerOn(id, true);
+    if (focusMode === "all") centerOn(id, true); // in focus mode the refit re-frames
   }
 
   const empty = layout.nodes.length === 0;
@@ -376,6 +408,24 @@ export default function TreeView({ people, relationships, mainId, onSelect, onOp
               />
             </div>
           ))}
+        </div>
+      )}
+
+      {!empty && active != null && (
+        <div className="tree-focus" onPointerDown={(e) => e.stopPropagation()}>
+          <span className="tree-focus-label">{t("tree.focus")}</span>
+          <button
+            className={focusMode === "ancestors" ? "active" : ""}
+            onClick={() => setFocusMode((m) => (m === "ancestors" ? "all" : "ancestors"))}
+          >
+            ↑ {t("tree.ancestors")}
+          </button>
+          <button
+            className={focusMode === "descendants" ? "active" : ""}
+            onClick={() => setFocusMode((m) => (m === "descendants" ? "all" : "descendants"))}
+          >
+            ↓ {t("tree.descendants")}
+          </button>
         </div>
       )}
 
