@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { api } from "@/lib/api";
@@ -26,6 +26,28 @@ export default function TreePage() {
   const router = useRouter();
   const { t } = useI18n();
   const treeId = Number(params.treeId);
+
+  // Size the tree canvas to the actual remaining viewport (not a fixed vh),
+  // so the bottom controls/minimap always sit in view regardless of how much
+  // header/occasions content sits above it.
+  const containerRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const [stageH, setStageH] = useState<number | null>(null);
+  useEffect(() => {
+    const measure = () => {
+      if (!stageRef.current) return;
+      const top = stageRef.current.getBoundingClientRect().top;
+      setStageH(Math.max(360, Math.round(window.innerHeight - top - 20)));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    if (containerRef.current) ro.observe(containerRef.current);
+    window.addEventListener("resize", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, []);
 
   const [tree, setTree] = useState<Tree | null>(null);
   const [people, setPeople] = useState<Person[]>([]);
@@ -119,7 +141,7 @@ export default function TreePage() {
   return (
     <>
       <TopBar />
-      <div className="container tree-container">
+      <div className="container tree-container" ref={containerRef}>
         {error && <div className="error">{error}</div>}
 
         <nav className="crumbs animate-in">
@@ -179,7 +201,11 @@ export default function TreePage() {
         {tree && people.length > 0 && <OnThisDay treeId={treeId} />}
 
         <div className="tree-layout animate-in d2">
-          <div className="tree-stage">
+          <div
+            className="tree-stage"
+            ref={stageRef}
+            style={stageH ? { height: stageH } : undefined}
+          >
             {people.length > 2 && (
               <div className="tree-search-wrap">
                 <PeopleSearch
@@ -220,7 +246,10 @@ export default function TreePage() {
               <div className="tree-hint">{t("tree.hint")}</div>
             )}
           </div>
-          <aside className="detail-col">
+          <aside
+            className="detail-col"
+            style={stageH ? { maxHeight: stageH, overflowY: "auto" } : undefined}
+          >
             {selected ? (
               <PersonDetailPanel
                 treeId={treeId}

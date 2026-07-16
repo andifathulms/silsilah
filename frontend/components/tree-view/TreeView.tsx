@@ -449,14 +449,12 @@ export default function TreeView({ people, relationships, mainId, onSelect, onOp
         <div className="tree-controls" onPointerDown={(e) => e.stopPropagation()}>
           {parentIds.length > 0 && (
             <button
-              className="tree-ctrl wide"
+              className="tree-ctrl"
               onClick={() => (collapsed.size ? expandAll() : collapseAll())}
               title={collapsed.size ? t("tree.expandAll") : t("tree.collapseAll")}
+              aria-label={collapsed.size ? t("tree.expandAll") : t("tree.collapseAll")}
             >
-              {collapsed.size ? "⧉" : "⧈"}{" "}
-              <span className="hide-sm">
-                {collapsed.size ? t("tree.expandAll") : t("tree.collapseAll")}
-              </span>
+              {collapsed.size ? "⧉" : "⧈"}
             </button>
           )}
           <button className="tree-ctrl" onClick={() => zoomBy(1 / 1.25)} title={t("tree.zoomOut")}>−</button>
