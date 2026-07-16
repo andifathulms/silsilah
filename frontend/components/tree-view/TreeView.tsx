@@ -428,6 +428,7 @@ function TreeCard({
     p.is_living ? "" : "deceased",
     selected ? "selected" : "",
     dimmed ? "dimmed" : "",
+    photo ? "has-photo" : "",
   ]
     .filter(Boolean)
     .join(" ");

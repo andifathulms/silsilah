@@ -538,8 +538,16 @@ textarea { resize: vertical; }
   display: grid; place-items: center;
   font-size: 1.1rem;
   overflow: hidden;
+  transition: width 0.15s var(--ease), height 0.15s var(--ease), border-radius 0.15s var(--ease);
 }
 .tree-node-avatar img { width: 100%; height: 100%; object-fit: cover; }
+/* Photo-forward: a real photo becomes a larger portrait tile. */
+.tree-node.has-photo .tree-node-avatar {
+  width: 54px;
+  height: 54px;
+  border-radius: 11px;
+  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.35);
+}
 .tree-node-body { min-width: 0; flex: 1; }
 
 /* Collapse / expand toggle */
