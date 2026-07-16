@@ -454,6 +454,33 @@ textarea { resize: vertical; }
 .tree-empty { display: grid; place-items: center; }
 .tree-world { position: absolute; top: 0; left: 0; will-change: transform; }
 
+/* Minimap overview */
+.tree-minimap {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  z-index: 4;
+  padding: 6px;
+  background: rgba(255, 253, 248, 0.92);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(8px);
+  overflow: hidden;
+  cursor: crosshair;
+  line-height: 0;
+}
+:root[data-theme="dark"] .tree-minimap { background: rgba(24, 32, 27, 0.92); }
+.mm-node { opacity: 0.85; }
+.mm-node.male { fill: #3f7d68; }
+.mm-node.female { fill: #b3765f; }
+.mm-node.genderless { fill: #8a8578; }
+.mm-view {
+  fill: rgba(201, 162, 69, 0.18);
+  stroke: var(--gold-500);
+  stroke-width: 1.25;
+}
+
 /* Focus-mode switcher (ancestors / descendants of the selected person) */
 .tree-focus {
   position: absolute;

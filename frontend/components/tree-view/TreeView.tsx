@@ -233,6 +233,22 @@ export default function TreeView({ people, relationships, mainId, onSelect, onOp
     setCollapsed(new Set());
   }
 
+  // --- Minimap (overview + draggable viewport), shown for larger trees ---
+  const MM_W = 190;
+  const MM_H = 128;
+  const mmScale = Math.min(
+    MM_W / Math.max(layout.width, 1),
+    MM_H / Math.max(layout.height, 1)
+  );
+  const showMinimap = layout.nodes.length > 10 && size.w > 0;
+  function minimapPanTo(clientX: number, clientY: number, svg: Element) {
+    const rect = svg.getBoundingClientRect();
+    const wx = (clientX - rect.left) / mmScale; // world x under the cursor
+    const wy = (clientY - rect.top) / mmScale;
+    setAnimate(false);
+    setTf((cur) => ({ x: size.w / 2 - wx * cur.k, y: size.h / 2 - wy * cur.k, k: cur.k }));
+  }
+
   // Center on a specific person when asked (search / "center here").
   const centerOn = useCallback(
     (id: number, smooth = true) => {
@@ -446,6 +462,43 @@ export default function TreeView({ people, relationships, mainId, onSelect, onOp
           <button className="tree-ctrl" onClick={() => zoomBy(1 / 1.25)} title={t("tree.zoomOut")}>−</button>
           <button className="tree-ctrl" onClick={() => zoomBy(1.25)} title={t("tree.zoomIn")}>+</button>
           <button className="tree-ctrl" onClick={() => fitAll(true)} title={t("tree.fit")}>⤢</button>
+        </div>
+      )}
+
+      {showMinimap && (
+        <div className="tree-minimap" onPointerDown={(e) => e.stopPropagation()}>
+          <svg
+            width={layout.width * mmScale}
+            height={layout.height * mmScale}
+            onClick={(e) => minimapPanTo(e.clientX, e.clientY, e.currentTarget)}
+            onPointerDown={(e) => {
+              e.stopPropagation();
+              (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
+              minimapPanTo(e.clientX, e.clientY, e.currentTarget);
+            }}
+            onPointerMove={(e) => {
+              if (e.buttons) minimapPanTo(e.clientX, e.clientY, e.currentTarget);
+            }}
+          >
+            {layout.nodes.map((n) => (
+              <rect
+                key={n.id}
+                className={`mm-node ${genderClass(n.person.gender)}`}
+                x={n.x * mmScale}
+                y={n.y * mmScale}
+                width={NODE_W * mmScale}
+                height={NODE_H * mmScale}
+                rx={1.5}
+              />
+            ))}
+            <rect
+              className="mm-view"
+              x={(-tf.x / tf.k) * mmScale}
+              y={(-tf.y / tf.k) * mmScale}
+              width={(size.w / tf.k) * mmScale}
+              height={(size.h / tf.k) * mmScale}
+            />
+          </svg>
         </div>
       )}
     </div>
