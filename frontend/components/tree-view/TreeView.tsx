@@ -151,23 +151,53 @@ export default function TreeView({ people, relationships, mainId, onSelect }: Pr
     return () => ro.disconnect();
   }, []);
 
+  const fitAll = useCallback(
+    (smooth = false) => {
+      if (!size.w || !size.h || !layout.width) return;
+      const k = clamp(
+        Math.min(size.w / layout.width, size.h / layout.height, 1),
+        MIN_K,
+        MAX_K
+      );
+      setAnimate(smooth);
+      setTf({
+        x: (size.w - layout.width * k) / 2,
+        y: Math.max(24, (size.h - layout.height * k) / 2),
+        k,
+      });
+    },
+    [size, layout]
+  );
+
   // Fit the whole tree when the underlying data (or first size) changes —
   // not on collapse, so folding a branch doesn't yank the whole view.
   useEffect(() => {
-    if (!size.w || !size.h || !layout.width) return;
-    const k = clamp(
-      Math.min(size.w / layout.width, size.h / layout.height, 1),
-      MIN_K,
-      MAX_K
-    );
-    setAnimate(false);
-    setTf({
-      x: (size.w - layout.width * k) / 2,
-      y: Math.max(24, (size.h - layout.height * k) / 2),
-      k,
-    });
+    fitAll(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [people, relationships, size.w, size.h]);
+
+  function zoomBy(factor: number) {
+    if (!size.w) return;
+    const cx = size.w / 2;
+    const cy = size.h / 2;
+    setAnimate(true);
+    setTf((cur) => {
+      const k = clamp(cur.k * factor, MIN_K, MAX_K);
+      const r = k / cur.k;
+      return { x: cx - (cx - cur.x) * r, y: cy - (cy - cur.y) * r, k };
+    });
+  }
+
+  const parentIds = useMemo(
+    () => people.filter((p) => (childrenOf.get(p.id)?.length ?? 0) > 0).map((p) => p.id),
+    [people, childrenOf]
+  );
+  function collapseAll() {
+    setCollapsed(new Set(parentIds));
+  }
+  function expandAll() {
+    setCollapsed(new Set());
+  }
 
   // Center on a specific person when asked (search / "center here").
   const centerOn = useCallback(
@@ -318,6 +348,26 @@ export default function TreeView({ people, relationships, mainId, onSelect }: Pr
               />
             </div>
           ))}
+        </div>
+      )}
+
+      {!empty && (
+        <div className="tree-controls" onPointerDown={(e) => e.stopPropagation()}>
+          {parentIds.length > 0 && (
+            <button
+              className="tree-ctrl wide"
+              onClick={() => (collapsed.size ? expandAll() : collapseAll())}
+              title={collapsed.size ? t("tree.expandAll") : t("tree.collapseAll")}
+            >
+              {collapsed.size ? "⧉" : "⧈"}{" "}
+              <span className="hide-sm">
+                {collapsed.size ? t("tree.expandAll") : t("tree.collapseAll")}
+              </span>
+            </button>
+          )}
+          <button className="tree-ctrl" onClick={() => zoomBy(1 / 1.25)} title={t("tree.zoomOut")}>−</button>
+          <button className="tree-ctrl" onClick={() => zoomBy(1.25)} title={t("tree.zoomIn")}>+</button>
+          <button className="tree-ctrl" onClick={() => fitAll(true)} title={t("tree.fit")}>⤢</button>
         </div>
       )}
     </div>

@@ -74,6 +74,11 @@ const en: Dict = {
   "tree.share": "Share",
   "tree.hint": "Click a person to focus · drag to pan · scroll to zoom",
   "tree.emptyPeople": "No people yet. Add someone to start the tree.",
+  "tree.fit": "Fit to screen",
+  "tree.zoomIn": "Zoom in",
+  "tree.zoomOut": "Zoom out",
+  "tree.collapseAll": "Collapse all",
+  "tree.expandAll": "Expand all",
   "node.born": "b.",
 
   "common.cancel": "Cancel",
@@ -425,6 +430,11 @@ const id: Dict = {
   "tree.share": "Bagikan",
   "tree.hint": "Klik seseorang untuk fokus · seret untuk geser · gulir untuk perbesar",
   "tree.emptyPeople": "Belum ada orang. Tambahkan seseorang untuk memulai pohon.",
+  "tree.fit": "Sesuaikan layar",
+  "tree.zoomIn": "Perbesar",
+  "tree.zoomOut": "Perkecil",
+  "tree.collapseAll": "Ciutkan semua",
+  "tree.expandAll": "Perluas semua",
   "node.born": "l.",
 
   "common.cancel": "Batal",
