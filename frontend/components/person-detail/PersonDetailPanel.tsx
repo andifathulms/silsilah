@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api, mediaUrl } from "@/lib/api";
-import type { Person, Relatives } from "@/lib/types";
+import type { Person, Relationship, Relatives } from "@/lib/types";
 import { useI18n } from "@/lib/i18n";
 
 export function genderLabel(t: (k: string) => string, gender: string): string {
@@ -19,19 +19,54 @@ interface Props {
   person: Person;
   canEdit?: boolean;
   coParentSuggestions?: Person[];
+  relationships?: Relationship[];
   onLinkParent?: (parentId: number) => void;
   onToggleLiving?: () => void;
   onRemove?: () => void;
+  onDisconnect?: (relId: number, otherName: string) => void;
   onRecenter?: (personId: number) => void;
   onAddRelative?: (kind: "parent" | "child" | "spouse" | "sibling") => void;
 }
 
-function RelativeRow({ label, people }: { label: string; people: Person[] }) {
+function RelativeRow({
+  label,
+  people,
+  findRel,
+  onDisconnect,
+}: {
+  label: string;
+  people: Person[];
+  /** For direct relations, return the edge id linking to a relative (else null). */
+  findRel?: (relativeId: number) => number | null;
+  onDisconnect?: (relId: number, otherName: string) => void;
+}) {
   if (!people.length) return null;
+  const canDisconnect = findRel && onDisconnect;
   return (
     <div className="rel-row">
       <span className="rel-label">{label}</span>
-      <span className="rel-people">{people.map((p) => p.name).join(", ")}</span>
+      <span className="rel-people">
+        {canDisconnect
+          ? people.map((p, i) => {
+              const relId = findRel!(p.id);
+              return (
+                <span key={p.id} className="rel-chip">
+                  {p.name}
+                  {relId != null && (
+                    <button
+                      className="rel-x"
+                      title="Disconnect"
+                      onClick={() => onDisconnect!(relId, p.name)}
+                    >
+                      ✕
+                    </button>
+                  )}
+                  {i < people.length - 1 ? " " : ""}
+                </span>
+              );
+            })
+          : people.map((p) => p.name).join(", ")}
+      </span>
     </div>
   );
 }
@@ -45,14 +80,30 @@ export default function PersonDetailPanel({
   person,
   canEdit,
   coParentSuggestions = [],
+  relationships,
   onLinkParent,
   onToggleLiving,
   onRemove,
+  onDisconnect,
   onRecenter,
   onAddRelative,
 }: Props) {
   const { t } = useI18n();
   const [relatives, setRelatives] = useState<Relatives | null>(null);
+
+  const rels = relationships ?? [];
+  const findParentRel = (rid: number) =>
+    rels.find((r) => r.type === "parent_child" && r.person_a === rid && r.person_b === person.id)?.id ?? null;
+  const findChildRel = (rid: number) =>
+    rels.find((r) => r.type === "parent_child" && r.person_a === person.id && r.person_b === rid)?.id ?? null;
+  const findSpouseRel = (rid: number) =>
+    rels.find(
+      (r) =>
+        r.type === "spouse" &&
+        ((r.person_a === person.id && r.person_b === rid) ||
+          (r.person_a === rid && r.person_b === person.id))
+    )?.id ?? null;
+  const disconnectProps = canEdit && onDisconnect && relationships ? { onDisconnect } : {};
 
   useEffect(() => {
     setRelatives(null);
@@ -101,9 +152,9 @@ export default function PersonDetailPanel({
 
       {relatives ? (
         <div className="rel-list">
-          <RelativeRow label={t("panel.parents")} people={relatives.parents} />
-          <RelativeRow label={t("panel.spouses")} people={relatives.spouses} />
-          <RelativeRow label={t("panel.children")} people={relatives.children} />
+          <RelativeRow label={t("panel.parents")} people={relatives.parents} findRel={findParentRel} {...disconnectProps} />
+          <RelativeRow label={t("panel.spouses")} people={relatives.spouses} findRel={findSpouseRel} {...disconnectProps} />
+          <RelativeRow label={t("panel.children")} people={relatives.children} findRel={findChildRel} {...disconnectProps} />
           <RelativeRow label={t("panel.fullSiblings")} people={relatives.siblings_full} />
           <RelativeRow label={t("panel.halfSiblings")} people={relatives.siblings_half} />
           <RelativeRow label={t("panel.grandparents")} people={relatives.grandparents} />

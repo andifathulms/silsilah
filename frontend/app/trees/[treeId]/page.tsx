@@ -143,6 +143,13 @@ export default function TreePage() {
     await reload();
   }
 
+  async function disconnectRel(relId: number, otherName: string) {
+    if (!selected) return;
+    if (!confirm(t("panel.disconnectConfirm", { a: selected.name, b: otherName }))) return;
+    await api.deleteRelationship(treeId, relId);
+    await reload();
+  }
+
   const roleBadge =
     tree?.my_role === "owner" ? "owner" : "forest";
 
@@ -263,10 +270,12 @@ export default function TreePage() {
                 treeId={treeId}
                 person={selected}
                 canEdit={canEdit}
+                relationships={relationships}
                 coParentSuggestions={coParentSuggestions}
                 onLinkParent={linkParent}
                 onToggleLiving={toggleLiving}
                 onRemove={removePerson}
+                onDisconnect={disconnectRel}
                 onAddRelative={(kind) => setAddRelative(kind)}
                 onRecenter={(id) => {
                   setMainId(id);

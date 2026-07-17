@@ -1034,6 +1034,22 @@ textarea { resize: vertical; }
   font-weight: 700;
 }
 .rel-people { font-size: 0.9rem; }
+.rel-chip { white-space: nowrap; }
+.rel-x {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  margin-left: 2px;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  color: var(--muted);
+  font-size: 0.62rem;
+  border-radius: var(--r-full);
+  vertical-align: middle;
+  opacity: 0.55;
+}
+.rel-x:hover { background: var(--danger-soft); color: var(--danger); opacity: 1; transform: none; box-shadow: none; }
 
 .quick-add {
   display: flex;
