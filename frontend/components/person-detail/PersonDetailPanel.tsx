@@ -21,6 +21,7 @@ interface Props {
   coParentSuggestions?: Person[];
   onLinkParent?: (parentId: number) => void;
   onToggleLiving?: () => void;
+  onRemove?: () => void;
   onRecenter?: (personId: number) => void;
   onAddRelative?: (kind: "parent" | "child" | "spouse" | "sibling") => void;
 }
@@ -46,6 +47,7 @@ export default function PersonDetailPanel({
   coParentSuggestions = [],
   onLinkParent,
   onToggleLiving,
+  onRemove,
   onRecenter,
   onAddRelative,
 }: Props) {
@@ -135,11 +137,18 @@ export default function PersonDetailPanel({
         </div>
       )}
 
-      {canEdit && onToggleLiving && (
-        <div style={{ marginTop: "0.75rem" }}>
-          <button className="sm" style={{ width: "100%" }} onClick={onToggleLiving}>
-            {person.is_living ? t("panel.markDeceased") : t("panel.markLiving")}
-          </button>
+      {canEdit && (onToggleLiving || onRemove) && (
+        <div className="row" style={{ marginTop: "0.75rem", gap: "0.5rem" }}>
+          {onToggleLiving && (
+            <button className="sm" style={{ flex: 1 }} onClick={onToggleLiving}>
+              {person.is_living ? t("panel.markDeceased") : t("panel.markLiving")}
+            </button>
+          )}
+          {onRemove && (
+            <button className="sm danger" onClick={onRemove} title={t("panel.remove")}>
+              🗑 {t("panel.remove")}
+            </button>
+          )}
         </div>
       )}
 

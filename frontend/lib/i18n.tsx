@@ -155,6 +155,10 @@ const en: Dict = {
   "panel.marriedNote": "(married to a parent)",
   "panel.markDeceased": "🕊 Mark as deceased",
   "panel.markLiving": "↩ Mark as living",
+  "panel.remove": "Remove",
+  "panel.removeConfirm": "Remove {name} from the tree? They'll be archived (their data is kept and can be restored).",
+  "panel.disconnect": "Disconnect this relationship",
+  "panel.disconnectConfirm": "Disconnect {a} and {b}? This removes the relationship, not the people.",
   "panel.centerHere": "🎯 Center here",
   "panel.viewProfile": "View full profile →",
 
@@ -514,6 +518,10 @@ const id: Dict = {
   "panel.marriedNote": "(menikah dengan orang tua)",
   "panel.markDeceased": "🕊 Tandai telah wafat",
   "panel.markLiving": "↩ Tandai masih hidup",
+  "panel.remove": "Hapus",
+  "panel.removeConfirm": "Hapus {name} dari pohon? Mereka akan diarsipkan (datanya tetap disimpan dan bisa dipulihkan).",
+  "panel.disconnect": "Putuskan hubungan ini",
+  "panel.disconnectConfirm": "Putuskan {a} dan {b}? Ini menghapus hubungannya, bukan orangnya.",
   "panel.centerHere": "🎯 Pusatkan di sini",
   "panel.viewProfile": "Lihat profil lengkap →",
 

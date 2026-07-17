@@ -135,6 +135,14 @@ export default function TreePage() {
     router.push("/");
   }
 
+  async function removePerson() {
+    if (!selected) return;
+    if (!confirm(t("panel.removeConfirm", { name: selected.name }))) return;
+    await api.archivePerson(treeId, selected.id);
+    setSelectedId(null);
+    await reload();
+  }
+
   const roleBadge =
     tree?.my_role === "owner" ? "owner" : "forest";
 
@@ -258,6 +266,7 @@ export default function TreePage() {
                 coParentSuggestions={coParentSuggestions}
                 onLinkParent={linkParent}
                 onToggleLiving={toggleLiving}
+                onRemove={removePerson}
                 onAddRelative={(kind) => setAddRelative(kind)}
                 onRecenter={(id) => {
                   setMainId(id);
