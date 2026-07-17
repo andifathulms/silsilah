@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { api, mediaUrl } from "@/lib/api";
 import { isAuthenticated } from "@/lib/auth";
-import type { ChangeLogEntry, Person, Relatives, Tree } from "@/lib/types";
+import type { ChangeLogEntry, Person, Relationship, Relatives, Tree } from "@/lib/types";
 import TopBar from "@/components/TopBar";
 import PersonForm from "@/components/person-form/PersonForm";
 import MediaGallery from "@/components/media/MediaGallery";
@@ -67,6 +67,7 @@ export default function PersonDetailPage() {
   const [tree, setTree] = useState<Tree | null>(null);
   const [person, setPerson] = useState<Person | null>(null);
   const [relatives, setRelatives] = useState<Relatives | null>(null);
+  const [relationships, setRelationships] = useState<Relationship[]>([]);
   const [changelog, setChangelog] = useState<ChangeLogEntry[] | null>(null);
   const [editing, setEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -75,14 +76,16 @@ export default function PersonDetailPage() {
 
   const load = useCallback(async () => {
     try {
-      const [tr, p, r] = await Promise.all([
+      const [tr, p, r, rels] = await Promise.all([
         api.getTree(treeId),
         api.getPerson(treeId, personId),
         api.getRelatives(treeId, personId),
+        api.listRelationships(treeId),
       ]);
       setTree(tr);
       setPerson(p);
       setRelatives(r);
+      setRelationships(rels);
       if (tr.my_role === "owner" || tr.my_role === "editor") {
         api.getChangelog(treeId, personId).then(setChangelog).catch(() => setChangelog([]));
       }
@@ -103,6 +106,12 @@ export default function PersonDetailPage() {
     if (!confirm(t("person.archiveConfirm", { name: person?.name ?? "" }))) return;
     await api.archivePerson(treeId, personId);
     router.push(`/trees/${treeId}`);
+  }
+
+  async function disconnect(relId: number, otherName: string) {
+    if (!confirm(t("panel.disconnectConfirm", { a: person?.name ?? "", b: otherName }))) return;
+    await api.deleteRelationship(treeId, relId);
+    await load();
   }
 
   if (error) return <div className="container"><div className="error">{error}</div></div>;
@@ -211,7 +220,14 @@ export default function PersonDetailPage() {
           <div className="card">
             <h3 style={{ marginTop: 0 }}>{t("person.family")}</h3>
             {relatives ? (
-              <RelativeLinks treeId={treeId} relatives={relatives} />
+              <RelativeLinks
+                treeId={treeId}
+                person={person}
+                relatives={relatives}
+                relationships={relationships}
+                canEdit={canEdit}
+                onDisconnect={disconnect}
+              />
             ) : (
               <p className="muted">{t("common.loading")}</p>
             )}
@@ -257,32 +273,70 @@ export default function PersonDetailPage() {
   );
 }
 
-function RelativeLinks({ treeId, relatives }: { treeId: number; relatives: Relatives }) {
+function RelativeLinks({
+  treeId,
+  person,
+  relatives,
+  relationships,
+  canEdit,
+  onDisconnect,
+}: {
+  treeId: number;
+  person: Person;
+  relatives: Relatives;
+  relationships: Relationship[];
+  canEdit: boolean;
+  onDisconnect: (relId: number, otherName: string) => void;
+}) {
   const { t } = useI18n();
-  const groups: [string, Person[]][] = [
-    [t("panel.parents"), relatives.parents],
-    [t("panel.spouses"), relatives.spouses],
-    [t("panel.children"), relatives.children],
-    [t("panel.fullSiblings"), relatives.siblings_full],
-    [t("panel.halfSiblings"), relatives.siblings_half],
-    [t("panel.grandparents"), relatives.grandparents],
+  type Kind = "parent" | "spouse" | "child" | undefined;
+  const groups: { label: string; list: Person[]; kind: Kind }[] = [
+    { label: t("panel.parents"), list: relatives.parents, kind: "parent" },
+    { label: t("panel.spouses"), list: relatives.spouses, kind: "spouse" },
+    { label: t("panel.children"), list: relatives.children, kind: "child" },
+    { label: t("panel.fullSiblings"), list: relatives.siblings_full, kind: undefined },
+    { label: t("panel.halfSiblings"), list: relatives.siblings_half, kind: undefined },
+    { label: t("panel.grandparents"), list: relatives.grandparents, kind: undefined },
   ];
-  const anyRelatives = groups.some(([, list]) => list.length > 0);
+
+  const findRel = (kind: Kind, rid: number): number | null => {
+    if (kind === "parent")
+      return relationships.find((r) => r.type === "parent_child" && r.person_a === rid && r.person_b === person.id)?.id ?? null;
+    if (kind === "child")
+      return relationships.find((r) => r.type === "parent_child" && r.person_a === person.id && r.person_b === rid)?.id ?? null;
+    if (kind === "spouse")
+      return relationships.find((r) => r.type === "spouse" && ((r.person_a === person.id && r.person_b === rid) || (r.person_a === rid && r.person_b === person.id)))?.id ?? null;
+    return null;
+  };
+
+  const anyRelatives = groups.some((g) => g.list.length > 0);
   if (!anyRelatives)
     return <p className="muted" style={{ margin: 0 }}>{t("person.noRelationships")}</p>;
   return (
     <div className="rel-list" style={{ borderTop: "none", paddingTop: 0 }}>
-      {groups.map(([label, list]) =>
+      {groups.map(({ label, list, kind }) =>
         list.length ? (
           <div key={label} className="rel-row">
             <span className="rel-label">{label}</span>
             <span className="rel-people">
-              {list.map((p, i) => (
-                <span key={p.id}>
-                  <Link href={`/trees/${treeId}/person/${p.id}`}>{p.name}</Link>
-                  {i < list.length - 1 ? ", " : ""}
-                </span>
-              ))}
+              {list.map((p, i) => {
+                const relId = canEdit && kind ? findRel(kind, p.id) : null;
+                return (
+                  <span key={p.id} className="rel-chip">
+                    <Link href={`/trees/${treeId}/person/${p.id}`}>{p.name}</Link>
+                    {relId != null && (
+                      <button
+                        className="rel-x"
+                        title={t("panel.disconnect")}
+                        onClick={() => onDisconnect(relId, p.name)}
+                      >
+                        ✕
+                      </button>
+                    )}
+                    {i < list.length - 1 ? " " : ""}
+                  </span>
+                );
+              })}
             </span>
           </div>
         ) : null
