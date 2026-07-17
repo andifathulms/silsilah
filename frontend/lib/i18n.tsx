@@ -82,6 +82,11 @@ const en: Dict = {
   "tree.focus": "Focus",
   "tree.ancestors": "Ancestors",
   "tree.descendants": "Descendants",
+  "tree.archivedChip": "{n} archived",
+  "tree.archivedTitle": "Archived people",
+  "tree.archivedSub": "People removed from the tree. Restore anyone to bring them back.",
+  "tree.restore": "Restore",
+  "tree.noArchived": "No archived people.",
   "node.born": "b.",
 
   "common.cancel": "Cancel",
@@ -445,6 +450,11 @@ const id: Dict = {
   "tree.focus": "Fokus",
   "tree.ancestors": "Leluhur",
   "tree.descendants": "Keturunan",
+  "tree.archivedChip": "{n} diarsipkan",
+  "tree.archivedTitle": "Orang yang diarsipkan",
+  "tree.archivedSub": "Orang yang dihapus dari pohon. Pulihkan siapa pun untuk mengembalikannya.",
+  "tree.restore": "Pulihkan",
+  "tree.noArchived": "Tidak ada orang yang diarsipkan.",
   "node.born": "l.",
 
   "common.cancel": "Batal",

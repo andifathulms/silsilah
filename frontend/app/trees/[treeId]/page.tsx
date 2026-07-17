@@ -63,20 +63,24 @@ export default function TreePage() {
   const [addRelative, setAddRelative] = useState<RelativeKind | null>(null);
   const [showData, setShowData] = useState(false);
   const [showPlaces, setShowPlaces] = useState(false);
+  const [archived, setArchived] = useState<Person[]>([]);
+  const [showArchived, setShowArchived] = useState(false);
 
   const canEdit = tree?.my_role === "owner" || tree?.my_role === "editor";
   const isOwner = tree?.my_role === "owner";
 
   const reload = useCallback(async () => {
     try {
-      const [t, ppl, rels] = await Promise.all([
+      const [t, ppl, rels, all] = await Promise.all([
         api.getTree(treeId),
         api.listPeople(treeId),
         api.listRelationships(treeId),
+        api.listPeople(treeId, true),
       ]);
       setTree(t);
       setPeople(ppl);
       setRelationships(rels);
+      setArchived(all.filter((p) => p.is_archived));
       if (selectedId == null && ppl.length) setSelectedId(ppl[0].id);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load tree");
@@ -150,6 +154,11 @@ export default function TreePage() {
     await reload();
   }
 
+  async function restorePerson(id: number) {
+    await api.updatePerson(treeId, id, { is_archived: false });
+    await reload();
+  }
+
   const roleBadge =
     tree?.my_role === "owner" ? "owner" : "forest";
 
@@ -171,6 +180,15 @@ export default function TreePage() {
             <div className="row wrap" style={{ gap: "0.5rem" }}>
               <span className="badge forest">👥 {t("tree.people", { count: people.length })}</span>
               {tree && <span className={`badge ${roleBadge}`}>{tree.my_role}</span>}
+              {canEdit && archived.length > 0 && (
+                <button
+                  className="badge archived-chip"
+                  onClick={() => setShowArchived(true)}
+                  title={t("tree.archivedTitle")}
+                >
+                  🗄 {t("tree.archivedChip", { n: archived.length })}
+                </button>
+              )}
             </div>
           </div>
           <div className="tree-toolbar">
@@ -333,6 +351,32 @@ export default function TreePage() {
               await reload();
             }}
           />
+        </Modal>
+      )}
+
+      {showArchived && (
+        <Modal
+          title={t("tree.archivedTitle")}
+          subtitle={t("tree.archivedSub")}
+          onClose={() => setShowArchived(false)}
+        >
+          {archived.length === 0 ? (
+            <p className="muted" style={{ margin: 0 }}>{t("tree.noArchived")}</p>
+          ) : (
+            <div className="member-list">
+              {archived.map((p) => (
+                <div key={p.id} className="member-row">
+                  <div className="avatar" style={{ width: 34, height: 34, fontSize: "0.8rem" }}>
+                    {p.name.charAt(0).toUpperCase()}
+                  </div>
+                  <span style={{ flex: 1, minWidth: 0 }}>{p.name}</span>
+                  <button className="sm primary" onClick={() => restorePerson(p.id)}>
+                    ↩ {t("tree.restore")}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </Modal>
       )}
 
