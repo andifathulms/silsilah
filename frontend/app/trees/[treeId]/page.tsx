@@ -159,6 +159,12 @@ export default function TreePage() {
     await reload();
   }
 
+  async function deleteForever(id: number, name: string) {
+    if (!confirm(t("tree.deleteForeverConfirm", { name }))) return;
+    await api.deletePerson(treeId, id);
+    await reload();
+  }
+
   const roleBadge =
     tree?.my_role === "owner" ? "owner" : "forest";
 
@@ -370,6 +376,15 @@ export default function TreePage() {
                     {p.name.charAt(0).toUpperCase()}
                   </div>
                   <span style={{ flex: 1, minWidth: 0 }}>{p.name}</span>
+                  {isOwner && (
+                    <button
+                      className="sm danger"
+                      onClick={() => deleteForever(p.id, p.name)}
+                      title={t("tree.deleteForever")}
+                    >
+                      🗑
+                    </button>
+                  )}
                   <button className="sm primary" onClick={() => restorePerson(p.id)}>
                     ↩ {t("tree.restore")}
                   </button>

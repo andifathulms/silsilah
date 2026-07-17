@@ -87,6 +87,8 @@ const en: Dict = {
   "tree.archivedSub": "People removed from the tree. Restore anyone to bring them back.",
   "tree.restore": "Restore",
   "tree.noArchived": "No archived people.",
+  "tree.deleteForever": "Delete forever",
+  "tree.deleteForeverConfirm": "Permanently delete {name}? This removes them and all their relationships, and cannot be undone.",
   "node.born": "b.",
 
   "common.cancel": "Cancel",
@@ -455,6 +457,8 @@ const id: Dict = {
   "tree.archivedSub": "Orang yang dihapus dari pohon. Pulihkan siapa pun untuk mengembalikannya.",
   "tree.restore": "Pulihkan",
   "tree.noArchived": "Tidak ada orang yang diarsipkan.",
+  "tree.deleteForever": "Hapus permanen",
+  "tree.deleteForeverConfirm": "Hapus {name} secara permanen? Ini menghapus mereka dan semua hubungannya, dan tidak bisa dibatalkan.",
   "node.born": "l.",
 
   "common.cancel": "Batal",

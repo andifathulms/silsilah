@@ -206,6 +206,9 @@ export const api = {
       method: "POST",
     }),
 
+  deletePerson: (treeId: number, personId: number) =>
+    request<void>(`/trees/${treeId}/people/${personId}/`, { method: "DELETE" }),
+
   getRelatives: (treeId: number, personId: number) =>
     request<Relatives>(`/trees/${treeId}/people/${personId}/relatives/`),
 
